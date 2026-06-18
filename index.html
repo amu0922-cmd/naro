@@ -167,7 +167,7 @@
     <div class="rh">
       <button class="ib" id="rbk">← 戻る</button>
       <div class="rt" id="rtit"></div>
-      <button class="ib" id="rset">⚙️</button>
+      <button class="ib" id="ropenext" title="なろうで開く">↗</button>
     </div>
     <div class="bbar" id="bbar">📖 しおり</div>
     <div class="enav">
@@ -175,10 +175,7 @@
       <span id="eind">- / -</span>
       <button class="eb" id="bnext">次 ▶</button>
     </div>
-    <div class="rc">
-      <div id="etbar" class="etbar"></div>
-      <div id="ebody"></div>
-    </div>
+    <iframe id="reader-iframe" src="" style="width:100%;border:none;flex:1;min-height:calc(100vh - 160px)"></iframe>
   </div>
 </main>
 
@@ -480,40 +477,21 @@ async function loadEpList(nc, tot) {
 }
 
 // ============================================================
-// Reader
+// Reader — iframeでなろう本文を直接表示
 // ============================================================
-async function openReader(nc, ep) {
+function openReader(nc, ep) {
   goPage('pr');
   curNovel = curNovel || {ncode: nc};
   curEp = ep;
   $('rtit').textContent = curNovel.title || nc;
-  $('ebody').innerHTML = '<div class="ld"><div class="sp"></div></div>';
-  $('etbar').textContent = '';
   const info  = epList.find(e => e.num === ep);
   const title = info?.title || `第${ep}話`;
   BMS[nc] = {ep, title}; saveBms();
   $('bbar').textContent = `📖 しおり：${title}`;
   updNav(ep);
-  try {
-    const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/`;
-    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(15000)});
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    const doc = new DOMParser().parseFromString(json.contents, 'text/html');
-    const sub  = doc.querySelector('.novel_subtitle');
-    $('etbar').textContent = sub?.textContent.trim() || title;
-    const body = doc.querySelector('#novel_honbun') || doc.querySelector('.novel_view');
-    if(body) {
-      body.querySelectorAll('script,style').forEach(el => el.remove());
-      $('ebody').innerHTML = body.innerHTML;
-    } else throw new Error('本文なし');
-  } catch(err) {
-    $('ebody').innerHTML = `<div style="color:var(--text2);line-height:1.8">
-      本文を読み込めませんでした。<br>
-      <a href="https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/" target="_blank"
-         style="color:var(--accent);font-weight:600">📖 なろうで直接読む ↗</a>
-    </div>`;
-  }
+  const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/`;
+  $('reader-iframe').src = url;
+  $('ropenext').onclick = () => window.open(url, '_blank');
 }
 function updNav(ep) {
   const tot = epList.length || curNovel?.general_all_no || 1;
@@ -531,7 +509,6 @@ $('rbk').addEventListener('click', () => goPage('pd', false));
 // ============================================================
 const dro = $('dro');
 $('btnS').addEventListener('click', () => dro.classList.add('open'));
-$('rset').addEventListener('click', () => dro.classList.add('open'));
 dro.addEventListener('click', e => { if(e.target === dro) dro.classList.remove('open'); });
 document.querySelectorAll('.tb').forEach(b => b.addEventListener('click', () => { CFG.th = b.dataset.th; saveCfg(); applySettings(); }));
 $('finc').addEventListener('click', () => { CFG.fs = Math.min(26, CFG.fs+1); saveCfg(); applySettings(); });
