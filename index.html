@@ -5,648 +5,550 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NaroReader</title>
 <style>
-  :root {
-    --bg:#faf8f5;--bg2:#f2ede6;--surface:#fff;--border:#e0d9cf;
-    --accent:#7c5cbf;--accent-light:#ede8f8;
-    --text:#1c1a22;--text2:#6b6478;--text3:#9b92a8;
-    --tag-bg:#ede8f8;--tag-text:#5a3fa0;--fav:#e05a7a;
-    --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);
-    --font-size:16px;--line-height:2.0;
-    --font-family:"Hiragino Mincho ProN","游明朝",Georgia,serif;
-  }
-  [data-theme="dark"]{--bg:#12101a;--bg2:#1e1b2a;--surface:#24203a;--border:#38334d;--accent:#9d7de8;--accent-light:#2a2445;--text:#f0ecfa;--text2:#b0a8c8;--text3:#6e6585;--tag-bg:#2a2445;--tag-text:#c4aaf5;--fav:#f07090;}
-  [data-theme="sepia"]{--bg:#f5f0e8;--bg2:#ede5d8;--surface:#faf6ee;--border:#d4c8b0;--accent:#8b6a3e;--accent-light:#f0e8d8;--text:#3a2e1e;--text2:#7a6a50;--text3:#a09080;--tag-bg:#e8dcc8;--tag-text:#6a5030;}
+  :root{--bg:#faf8f5;--bg2:#f2ede6;--surface:#fff;--border:#e0d9cf;--accent:#7c5cbf;--accent-light:#ede8f8;--text:#1c1a22;--text2:#6b6478;--text3:#9b92a8;--tag-bg:#ede8f8;--tag-text:#5a3fa0;--radius:12px;--shadow:0 2px 12px rgba(0,0,0,.08);--fs:16px;--lh:2.0;--ff:"Hiragino Mincho ProN","游明朝",Georgia,serif}
+  [data-theme=dark]{--bg:#12101a;--bg2:#1e1b2a;--surface:#24203a;--border:#38334d;--accent:#9d7de8;--accent-light:#2a2445;--text:#f0ecfa;--text2:#b0a8c8;--text3:#6e6585;--tag-bg:#2a2445;--tag-text:#c4aaf5}
+  [data-theme=sepia]{--bg:#f5f0e8;--bg2:#ede5d8;--surface:#faf6ee;--border:#d4c8b0;--accent:#8b6a3e;--accent-light:#f0e8d8;--text:#3a2e1e;--text2:#7a6a50;--text3:#a09080;--tag-bg:#e8dcc8;--tag-text:#6a5030}
   *{box-sizing:border-box;margin:0;padding:0}
-  html{font-size:var(--font-size)}
+  html{font-size:var(--fs)}
   body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
-  /* Header */
   .header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 8px rgba(0,0,0,.06)}
   .logo{font-size:1.2rem;font-weight:800;color:var(--accent);letter-spacing:-.03em}
   .logo span{color:var(--text2);font-weight:400;font-size:.75rem;margin-left:4px}
-  .header-actions{margin-left:auto}
-  .icon-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:1.2rem;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;transition:background .15s}
-  .icon-btn:hover{background:var(--accent-light);color:var(--accent)}
-  /* Bottom Nav */
-  .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:.65rem;gap:3px;transition:color .15s}
-  .nav-item .nav-icon{font-size:1.3rem}
-  .nav-item.active{color:var(--accent)}
-  /* Pages */
+  .ib{background:none;border:none;cursor:pointer;color:var(--text2);font-size:1.2rem;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
+  .ml{margin-left:auto}
+  .bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+  .ni{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:.65rem;gap:3px}
+  .ni .icon{font-size:1.3rem}
+  .ni.active{color:var(--accent)}
   .page{display:none;padding-bottom:70px}
   .page.active{display:block}
-  #page-reader.active,#page-detail.active{display:flex;flex-direction:column}
-  /* Search */
-  .search-header{background:var(--bg2);padding:16px;border-bottom:1px solid var(--border)}
-  .search-bar{display:flex;gap:8px;margin-bottom:12px}
-  .search-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:.95rem;outline:none}
-  .search-input:focus{border-color:var(--accent)}
-  .search-btn{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-weight:600;cursor:pointer;font-size:.9rem;white-space:nowrap}
-  .filter-row{display:flex;gap:8px;flex-wrap:wrap}
-  .filter-select{padding:6px 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);font-size:.8rem;cursor:pointer;outline:none}
-  .filter-select:focus{border-color:var(--accent)}
-  /* Genre tabs */
-  .genre-tabs{display:flex;overflow-x:auto;gap:6px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);scrollbar-width:none}
-  .genre-tabs::-webkit-scrollbar{display:none}
-  .genre-tab{white-space:nowrap;padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:.78rem;font-weight:600;cursor:pointer;flex-shrink:0;transition:all .15s}
-  .genre-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  /* Novel cards */
-  .novel-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-  .novel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:transform .1s}
-  .novel-card:active{transform:scale(.99)}
-  .novel-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
-  .novel-title{font-size:.95rem;font-weight:700;line-height:1.4;flex:1}
-  .fav-btn{background:none;border:none;cursor:pointer;font-size:1.2rem;flex-shrink:0;transition:transform .1s;padding:2px}
-  .fav-btn:active{transform:scale(1.3)}
-  .novel-author{font-size:.75rem;color:var(--text2);margin-bottom:8px}
-  .novel-summary{font-size:.8rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
-  .novel-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+  #pd.active,#pr.active{display:flex;flex-direction:column}
+  .sh{background:var(--bg2);padding:16px;border-bottom:1px solid var(--border)}
+  .sbar{display:flex;gap:8px;margin-bottom:12px}
+  .si{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:.95rem;outline:none}
+  .si:focus{border-color:var(--accent)}
+  .sbtn{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-weight:600;cursor:pointer}
+  .fr{display:flex;gap:8px;flex-wrap:wrap}
+  .fs{padding:6px 10px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);font-size:.8rem;cursor:pointer;outline:none}
+  .gtabs{display:flex;overflow-x:auto;gap:6px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);scrollbar-width:none}
+  .gtabs::-webkit-scrollbar{display:none}
+  .gt{white-space:nowrap;padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:.78rem;font-weight:600;cursor:pointer;flex-shrink:0}
+  .gt.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .nlist{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .nc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;box-shadow:var(--shadow)}
+  .nch{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+  .nt{font-size:.95rem;font-weight:700;line-height:1.4;flex:1}
+  .fb{background:none;border:none;cursor:pointer;font-size:1.2rem;flex-shrink:0;padding:2px}
+  .na{font-size:.75rem;color:var(--text2);margin-bottom:8px}
+  .ns{font-size:.8rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
+  .ntags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
   .tag{padding:2px 8px;background:var(--tag-bg);color:var(--tag-text);border-radius:20px;font-size:.7rem;font-weight:600}
-  .novel-meta{display:flex;gap:10px;font-size:.72rem;color:var(--text3);flex-wrap:wrap}
-  .complete-badge{padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.68rem;font-weight:700}
-  [data-theme="dark"] .complete-badge{background:#1b3a1e;color:#66bb6a}
-  .wip-badge{padding:1px 7px;background:#fff3e0;color:#e65100;border-radius:10px;font-size:.68rem;font-weight:700}
-  [data-theme="dark"] .wip-badge{background:#3a2200;color:#ffa726}
-  /* Loading / Empty */
-  .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:var(--text2)}
-  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  .nm{display:flex;gap:10px;font-size:.72rem;color:var(--text3);flex-wrap:wrap}
+  .cb{padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.68rem;font-weight:700}
+  [data-theme=dark] .cb{background:#1b3a1e;color:#66bb6a}
+  .wb{padding:1px 7px;background:#fff3e0;color:#e65100;border-radius:10px;font-size:.68rem;font-weight:700}
+  [data-theme=dark] .wb{background:#3a2200;color:#ffa726}
+  .ld{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;color:var(--text2)}
+  .sp{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:.9rem;line-height:1.8}
-  .empty-icon{font-size:3rem;margin-bottom:12px}
-  /* Detail */
-  .detail-header,.reader-header{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
-  .detail-body{padding:20px 16px}
-  .detail-title{font-size:1.2rem;font-weight:800;margin-bottom:6px;line-height:1.4}
-  .detail-author{font-size:.85rem;color:var(--text2);margin-bottom:14px}
-  .detail-badges{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-  .detail-summary{font-size:.88rem;color:var(--text2);line-height:1.7;background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px}
-  .detail-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-  .stat-box{background:var(--bg2);border-radius:10px;padding:10px;text-align:center}
-  .stat-num{font-size:1.1rem;font-weight:800;color:var(--accent)}
-  .stat-label{font-size:.68rem;color:var(--text3);margin-top:2px}
-  .detail-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
-  .read-btn{display:block;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;text-align:center;margin-bottom:10px}
-  .read-btn-sub{background:var(--bg2);color:var(--text2)}
-  .ep-list-title{font-size:.85rem;font-weight:700;color:var(--text2);margin-bottom:10px;margin-top:16px}
-  .ep-list{display:flex;flex-direction:column;gap:4px}
-  .ep-item{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .1s}
-  .ep-item:active{background:var(--accent-light)}
-  .ep-item.current{border-color:var(--accent);color:var(--accent);font-weight:600}
-  .ep-num{font-size:.72rem;color:var(--text3);margin-right:8px;flex-shrink:0}
-  .ep-jump{display:flex;gap:8px;align-items:center;margin-bottom:12px}
-  .ep-jump input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.9rem;outline:none}
-  .ep-jump input:focus{border-color:var(--accent)}
-  .ep-jump button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer}
-  /* Reader */
-  .reader-title{flex:1;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .episode-nav{background:var(--bg2);padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--text2)}
-  .ep-btn{padding:6px 14px;background:var(--accent-light);color:var(--accent);border:none;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer}
-  .ep-btn:disabled{opacity:.4;cursor:default}
-  .reader-content{padding:20px 20px 40px;font-family:var(--font-family);font-size:var(--font-size);line-height:var(--line-height);max-width:680px;margin:0 auto;width:100%}
-  .episode-title-bar{font-size:1rem;font-weight:700;margin-bottom:24px;color:var(--accent);border-left:3px solid var(--accent);padding-left:12px;line-height:1.4}
-  .bookmark-bar{background:var(--bg2);padding:8px 16px;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--text2)}
-  /* Drawer */
-  .drawer-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:none;align-items:flex-end}
-  .drawer-overlay.open{display:flex}
-  .drawer{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-height:90vh;overflow-y:auto}
-  .drawer-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
-  .drawer-title{font-size:1rem;font-weight:800;margin-bottom:20px}
-  .setting-section{margin-bottom:20px}
-  .setting-label{font-size:.78rem;color:var(--text2);font-weight:600;margin-bottom:10px}
-  .theme-options,.lh-options{display:flex;gap:8px}
-  .theme-btn,.lh-btn{flex:1;padding:10px 6px;border:2px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:4px;transition:border-color .15s}
-  .lh-btn{padding:8px;border-radius:8px}
-  .theme-btn.active,.lh-btn.active{border-color:var(--accent);color:var(--accent)}
-  .theme-icon{font-size:1.3rem}
-  .font-size-ctrl{display:flex;align-items:center;gap:12px}
-  .size-btn{width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text);font-size:1rem;display:flex;align-items:center;justify-content:center}
-  .font-preview{flex:1;font-size:var(--font-size);font-family:var(--font-family)}
-  /* Scroll top */
-  .scroll-top{position:fixed;bottom:80px;right:16px;z-index:90;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1rem;box-shadow:0 4px 16px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center}
-  .scroll-top.visible{display:flex}
+  .em{text-align:center;padding:60px 20px;color:var(--text3);font-size:.9rem;line-height:2}
+  .dh,.rh{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
+  .db{padding:20px 16px}
+  .dt{font-size:1.2rem;font-weight:800;margin-bottom:6px;line-height:1.4}
+  .dau{font-size:.85rem;color:var(--text2);margin-bottom:14px}
+  .dbadge{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .dsum{font-size:.88rem;color:var(--text2);line-height:1.7;background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px}
+  .dstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+  .sb{background:var(--bg2);border-radius:10px;padding:10px;text-align:center}
+  .sn{font-size:1.1rem;font-weight:800;color:var(--accent)}
+  .sl{font-size:.68rem;color:var(--text3);margin-top:2px}
+  .dtags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+  .rbtn{display:block;width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;cursor:pointer;text-align:center;margin-bottom:10px}
+  .rbtn2{background:var(--bg2);color:var(--text2)}
+  .elt{font-size:.85rem;font-weight:700;color:var(--text2);margin-bottom:10px;margin-top:16px}
+  .elist{display:flex;flex-direction:column;gap:4px}
+  .ei{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+  .ei.cur{border-color:var(--accent);color:var(--accent);font-weight:600}
+  .enum{font-size:.72rem;color:var(--text3);margin-right:8px;flex-shrink:0}
+  .ejump{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+  .ejump input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.9rem;outline:none}
+  .ejump input:focus{border-color:var(--accent)}
+  .ejump button{padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer}
+  .rt{flex:1;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .enav{background:var(--bg2);padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .eb{padding:6px 14px;background:var(--accent-light);color:var(--accent);border:none;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer}
+  .eb:disabled{opacity:.4;cursor:default}
+  .rc{padding:20px 20px 40px;font-family:var(--ff);font-size:var(--fs);line-height:var(--lh);max-width:680px;margin:0 auto;width:100%}
+  .etbar{font-size:1rem;font-weight:700;margin-bottom:24px;color:var(--accent);border-left:3px solid var(--accent);padding-left:12px;line-height:1.4}
+  .bbar{background:var(--bg2);padding:8px 16px;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--text2)}
+  .dro{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:none;align-items:flex-end}
+  .dro.open{display:flex}
+  .drw{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-height:90vh;overflow-y:auto}
+  .drh{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+  .drt{font-size:1rem;font-weight:800;margin-bottom:20px}
+  .ss{margin-bottom:20px}
+  .sl2{font-size:.78rem;color:var(--text2);font-weight:600;margin-bottom:10px}
+  .to,.lho{display:flex;gap:8px}
+  .tb,.lhb{flex:1;padding:10px 6px;border:2px solid var(--border);border-radius:10px;background:none;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:4px}
+  .lhb{padding:8px;border-radius:8px}
+  .tb.active,.lhb.active{border-color:var(--accent);color:var(--accent)}
+  .tic{font-size:1.3rem}
+  .fsc{display:flex;align-items:center;gap:12px}
+  .fsz{width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text);font-size:1rem;display:flex;align-items:center;justify-content:center}
+  .fp{flex:1;font-size:var(--fs);font-family:var(--ff)}
+  .stb{position:fixed;bottom:80px;right:16px;z-index:90;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1rem;box-shadow:0 4px 16px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center}
+  .stb.v{display:flex}
+  /* 本文スタイル */
+  #ebody p{margin-bottom:1em}
+  #ebody br+br{display:block;margin:.5em 0;content:""}
 </style>
 </head>
 <body>
-<div id="app">
-  <header class="header">
-    <div class="logo">NaroReader <span>なろう</span></div>
-    <div class="header-actions">
-      <button class="icon-btn" id="btn-settings">⚙️</button>
+<header class="header">
+  <div class="logo">NaroReader <span>なろう</span></div>
+  <button class="ib ml" id="btnS">⚙️</button>
+</header>
+<main>
+  <!-- 検索 -->
+  <div class="page active" id="ps">
+    <div class="sh">
+      <div class="sbar">
+        <input class="si" id="si" placeholder="タイトル・作者・キーワード…" enterkeyhint="search">
+        <button class="sbtn" id="sbtn">検索</button>
+      </div>
+      <div class="fr">
+        <select class="fs" id="fg">
+          <option value="">すべて</option>
+          <option value="101">異世界〔恋愛〕</option><option value="102">現実世界〔恋愛〕</option>
+          <option value="201" selected>ハイファンタジー</option><option value="202">ローファンタジー</option>
+          <option value="301">純文学</option><option value="302">ヒューマンドラマ</option>
+          <option value="303">歴史</option><option value="304">推理</option>
+          <option value="305">ホラー</option><option value="306">アクション</option><option value="307">コメディー</option>
+          <option value="401">VRゲーム〔SF〕</option><option value="402">宇宙〔SF〕</option>
+          <option value="403">空想科学〔SF〕</option><option value="404">パニック〔SF〕</option>
+          <option value="9801">ノンジャンル</option><option value="9999">その他</option>
+        </select>
+        <select class="fs" id="fo"><option value="hyoka">評価順</option><option value="weekly">週間</option><option value="favnovelcnt">お気に入り</option><option value="new">新着</option><option value="lastupdatetime">更新順</option></select>
+        <select class="fs" id="fe"><option value="">完結：すべて</option><option value="1">完結のみ</option><option value="0">連載中のみ</option></select>
+        <select class="fs" id="fl"><option value="">文字数：すべて</option><option value="s">短編〜5万</option><option value="m">中編5〜20万</option><option value="l">長編20万〜</option></select>
+      </div>
     </div>
-  </header>
+    <div class="gtabs">
+      <button class="gt active" data-g="">すべて</button>
+      <button class="gt" data-g="201">⚔️ ハイファンタジー</button>
+      <button class="gt" data-g="202">🧙 ローファンタジー</button>
+      <button class="gt" data-g="101">💕 異世界恋愛</button>
+      <button class="gt" data-g="401">🎮 VRゲーム</button>
+      <button class="gt" data-g="304">🔍 推理</button>
+      <button class="gt" data-g="305">👻 ホラー</button>
+      <button class="gt" data-g="306">💥 アクション</button>
+    </div>
+    <div id="sr"><div class="em">📚 ジャンルを選んで探してみよう</div></div>
+  </div>
 
-  <main>
-    <!-- 検索 -->
-    <div class="page active" id="page-search">
-      <div class="search-header">
-        <div class="search-bar">
-          <input class="search-input" id="search-input" placeholder="タイトル・作者・キーワード…" enterkeyhint="search">
-          <button class="search-btn" id="search-btn">検索</button>
-        </div>
-        <div class="filter-row">
-          <select class="filter-select" id="filter-genre">
-            <option value="">すべて</option>
-            <option value="101">異世界〔恋愛〕</option>
-            <option value="102">現実世界〔恋愛〕</option>
-            <option value="201" selected>ハイファンタジー</option>
-            <option value="202">ローファンタジー</option>
-            <option value="301">純文学</option>
-            <option value="302">ヒューマンドラマ</option>
-            <option value="303">歴史</option>
-            <option value="304">推理</option>
-            <option value="305">ホラー</option>
-            <option value="306">アクション</option>
-            <option value="307">コメディー</option>
-            <option value="401">VRゲーム〔SF〕</option>
-            <option value="402">宇宙〔SF〕</option>
-            <option value="403">空想科学〔SF〕</option>
-            <option value="404">パニック〔SF〕</option>
-            <option value="9801">ノンジャンル</option>
-            <option value="9999">その他</option>
-          </select>
-          <select class="filter-select" id="filter-order">
-            <option value="hyoka">評価順</option>
-            <option value="weekly">週間ポイント</option>
-            <option value="favnovelcnt">お気に入り数</option>
-            <option value="new">新着更新</option>
-            <option value="lastupdatetime">更新日時</option>
-          </select>
-          <select class="filter-select" id="filter-end">
-            <option value="">完結：すべて</option>
-            <option value="1">完結のみ</option>
-            <option value="0">連載中のみ</option>
-          </select>
-          <select class="filter-select" id="filter-length">
-            <option value="">文字数：すべて</option>
-            <option value="short">短編（〜5万）</option>
-            <option value="medium">中編（5〜20万）</option>
-            <option value="long">長編（20万〜）</option>
-          </select>
-        </div>
-      </div>
-      <div class="genre-tabs">
-        <button class="genre-tab active" data-genre="">すべて</button>
-        <button class="genre-tab" data-genre="201">⚔️ ハイファンタジー</button>
-        <button class="genre-tab" data-genre="202">🧙 ローファンタジー</button>
-        <button class="genre-tab" data-genre="101">💕 異世界恋愛</button>
-        <button class="genre-tab" data-genre="401">🎮 VRゲーム</button>
-        <button class="genre-tab" data-genre="304">🔍 推理</button>
-        <button class="genre-tab" data-genre="305">👻 ホラー</button>
-        <button class="genre-tab" data-genre="306">💥 アクション</button>
-      </div>
-      <div id="search-results">
-        <div class="empty"><div class="empty-icon">📚</div>ジャンルを選んで探してみよう</div>
-      </div>
-    </div>
+  <!-- お気に入り -->
+  <div class="page" id="pf">
+    <div style="padding:16px 16px 8px;font-size:1rem;font-weight:800">❤️ お気に入り</div>
+    <div id="fl2"><div class="em">🔖 お気に入りはまだありません</div></div>
+  </div>
 
-    <!-- お気に入り -->
-    <div class="page" id="page-favorites">
-      <div style="padding:16px 16px 8px;font-size:1rem;font-weight:800">❤️ お気に入り</div>
-      <div id="fav-list"><div class="empty"><div class="empty-icon">🔖</div>お気に入りはまだありません</div></div>
+  <!-- 詳細 -->
+  <div class="page" id="pd">
+    <div class="dh">
+      <button class="ib" id="dbk">← 戻る</button>
+      <div style="flex:1;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="dht"></div>
+      <button style="background:none;border:none;cursor:pointer;font-size:1.5rem" id="dfb">🤍</button>
     </div>
+    <div class="db" id="db"></div>
+  </div>
 
-    <!-- 詳細 -->
-    <div class="page" id="page-detail">
-      <div class="detail-header">
-        <button class="icon-btn" id="detail-back">← 戻る</button>
-        <div style="flex:1;font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="detail-header-title"></div>
-        <button class="fav-btn" id="detail-fav-btn" style="font-size:1.5rem;background:none;border:none;cursor:pointer">🤍</button>
-      </div>
-      <div class="detail-body" id="detail-body"></div>
+  <!-- 読書 -->
+  <div class="page" id="pr">
+    <div class="rh">
+      <button class="ib" id="rbk">← 戻る</button>
+      <div class="rt" id="rtit"></div>
+      <button class="ib" id="rset">⚙️</button>
     </div>
+    <div class="bbar" id="bbar">📖 しおり</div>
+    <div class="enav">
+      <button class="eb" id="bprev">◀ 前</button>
+      <span id="eind">- / -</span>
+      <button class="eb" id="bnext">次 ▶</button>
+    </div>
+    <div class="rc">
+      <div id="etbar" class="etbar"></div>
+      <div id="ebody"></div>
+    </div>
+  </div>
+</main>
 
-    <!-- 読書 -->
-    <div class="page" id="page-reader">
-      <div class="reader-header">
-        <button class="icon-btn" id="reader-back">← 戻る</button>
-        <div class="reader-title" id="reader-title"></div>
-        <button class="icon-btn" id="reader-settings-btn">⚙️</button>
-      </div>
-      <div class="bookmark-bar" id="bookmark-bar">📖 しおり</div>
-      <div class="episode-nav">
-        <button class="ep-btn" id="btn-prev-ep">◀ 前</button>
-        <span id="ep-indicator">- / -</span>
-        <button class="ep-btn" id="btn-next-ep">次 ▶</button>
-      </div>
-      <div class="reader-content">
-        <div id="episode-title-bar" class="episode-title-bar"></div>
-        <div id="episode-body"></div>
-      </div>
-    </div>
-  </main>
+<nav class="bnav">
+  <button class="ni active" data-p="ps"><span class="icon">🔍</span><span>さがす</span></button>
+  <button class="ni" data-p="pf"><span class="icon">❤️</span><span>お気に入り</span></button>
+</nav>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-page="search"><span class="nav-icon">🔍</span><span>さがす</span></button>
-    <button class="nav-item" data-page="favorites"><span class="nav-icon">❤️</span><span>お気に入り</span></button>
-  </nav>
-</div>
-
-<!-- 設定ドロワー -->
-<div class="drawer-overlay" id="settings-drawer">
-  <div class="drawer">
-    <div class="drawer-handle"></div>
-    <div class="drawer-title">⚙️ 表示設定</div>
-    <div class="setting-section">
-      <div class="setting-label">テーマ</div>
-      <div class="theme-options">
-        <button class="theme-btn active" data-theme="light"><span class="theme-icon">☀️</span>ライト</button>
-        <button class="theme-btn" data-theme="sepia"><span class="theme-icon">📜</span>セピア</button>
-        <button class="theme-btn" data-theme="dark"><span class="theme-icon">🌙</span>ダーク</button>
+<div class="dro" id="dro">
+  <div class="drw">
+    <div class="drh"></div>
+    <div class="drt">⚙️ 表示設定</div>
+    <div class="ss"><div class="sl2">テーマ</div>
+      <div class="to">
+        <button class="tb active" data-th="light"><span class="tic">☀️</span>ライト</button>
+        <button class="tb" data-th="sepia"><span class="tic">📜</span>セピア</button>
+        <button class="tb" data-th="dark"><span class="tic">🌙</span>ダーク</button>
       </div>
     </div>
-    <div class="setting-section">
-      <div class="setting-label">文字サイズ</div>
-      <div class="font-size-ctrl">
-        <button class="size-btn" id="font-dec">A−</button>
-        <div class="font-preview">あいうえお</div>
-        <button class="size-btn" id="font-inc">A+</button>
+    <div class="ss"><div class="sl2">文字サイズ</div>
+      <div class="fsc"><button class="fsz" id="fdec">A−</button><div class="fp">あいうえお</div><button class="fsz" id="finc">A+</button></div>
+    </div>
+    <div class="ss"><div class="sl2">行間</div>
+      <div class="lho">
+        <button class="lhb" data-lh="1.6">狭い</button>
+        <button class="lhb active" data-lh="2.0">普通</button>
+        <button class="lhb" data-lh="2.5">広い</button>
       </div>
     </div>
-    <div class="setting-section">
-      <div class="setting-label">行間</div>
-      <div class="lh-options">
-        <button class="lh-btn" data-lh="1.6">狭い</button>
-        <button class="lh-btn active" data-lh="2.0">普通</button>
-        <button class="lh-btn" data-lh="2.5">広い</button>
-      </div>
-    </div>
-    <div class="setting-section">
-      <div class="setting-label">フォント</div>
-      <div class="lh-options">
-        <button class="lh-btn active" data-font="serif">明朝体</button>
-        <button class="lh-btn" data-font="gothic">ゴシック</button>
+    <div class="ss"><div class="sl2">フォント</div>
+      <div class="lho">
+        <button class="lhb active" data-fn="serif">明朝体</button>
+        <button class="lhb" data-fn="gothic">ゴシック</button>
       </div>
     </div>
   </div>
 </div>
-
-<button class="scroll-top" id="scroll-top">▲</button>
+<button class="stb" id="stb">▲</button>
 
 <script>
-// =============================================
-// State
-// =============================================
-const S = {
-  page: 'search', prevPage: 'search',
-  favs: JSON.parse(localStorage.getItem('nr_favs')||'{}'),
-  bmarks: JSON.parse(localStorage.getItem('nr_bmarks')||'{}'),
-  cfg: JSON.parse(localStorage.getItem('nr_cfg')||'{"theme":"light","fs":16,"lh":2.0,"font":"serif"}'),
-  novel: null, ep: 1, totalEp: 0,
-  results: [], epList: [],
-};
+// ============================================================
+// JSONP helper — CORSを完全回避、なろうAPIのcallback対応を利用
+// ============================================================
+function jsonpFetch(url, params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'nr_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error('JSONP timeout'));
+    }, 15000);
 
-// =============================================
-// なろうAPI — プロキシ不要、直接fetch可能
-// =============================================
-const NAROU_API = 'https://api.syosetu.com/novelapi/api/';
-// HTML取得用プロキシ（本文・目次）
-const PROXY = 'https://corsproxy.io/?url=';
+    window[cbName] = (data) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
 
-// =============================================
-// Helpers
-// =============================================
+    const p = new URLSearchParams(params);
+    p.set('callback', cbName);
+    // なろうAPIはHTTPSからのJSONPコール可
+    const script = document.createElement('script');
+    script.src = url + '?' + p.toString();
+    script.onerror = () => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      reject(new Error('Script load error'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// ============================================================
+// State & Config
+// ============================================================
+const CFG  = JSON.parse(localStorage.getItem('nr_cfg') || '{"th":"light","fs":16,"lh":2.0,"fn":"serif"}');
+const FAVS = JSON.parse(localStorage.getItem('nr_favs') || '{}');
+const BMS  = JSON.parse(localStorage.getItem('nr_bms') || '{}');
+let curPage='ps', prevPage='ps';
+let curNovel=null, curEp=1, totalEp=0, epList=[], results=[];
+
+const API  = 'https://api.syosetu.com/novelapi/api/';
+// 本文HTMLのみ corsproxy.io 経由（JSONPは使えないため）
+const HPRX = 'https://corsproxy.io/?url=';
+
+const GM = {'101':'異世界〔恋愛〕','102':'現実世界〔恋愛〕','201':'ハイファンタジー','202':'ローファンタジー','301':'純文学','302':'ヒューマンドラマ','303':'歴史','304':'推理','305':'ホラー','306':'アクション','307':'コメディー','401':'VRゲーム〔SF〕','402':'宇宙〔SF〕','403':'空想科学〔SF〕','404':'パニック〔SF〕','9801':'ノンジャンル','9999':'その他'};
+
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const fmt = n => { if(!n)return'0'; if(n>=10000)return(n/10000).toFixed(1)+'万'; return n.toLocaleString(); };
+const fmt = n => { if(!n) return '0'; if(n>=10000) return (n/10000).toFixed(1)+'万'; return n.toLocaleString(); };
+const $   = id => document.getElementById(id);
+const saveFavs = () => localStorage.setItem('nr_favs', JSON.stringify(FAVS));
+const saveBms  = () => localStorage.setItem('nr_bms',  JSON.stringify(BMS));
+const saveCfg  = () => localStorage.setItem('nr_cfg',  JSON.stringify(CFG));
 
-const genreMap = {
-  '101':'異世界〔恋愛〕','102':'現実世界〔恋愛〕','201':'ハイファンタジー','202':'ローファンタジー',
-  '301':'純文学','302':'ヒューマンドラマ','303':'歴史','304':'推理','305':'ホラー',
-  '306':'アクション','307':'コメディー','401':'VRゲーム〔SF〕','402':'宇宙〔SF〕',
-  '403':'空想科学〔SF〕','404':'パニック〔SF〕','9801':'ノンジャンル','9999':'その他'
-};
-
-// =============================================
+// ============================================================
 // Settings
-// =============================================
+// ============================================================
 function applySettings() {
-  const c = S.cfg;
-  document.documentElement.setAttribute('data-theme', c.theme||'light');
-  document.documentElement.style.setProperty('--font-size', (c.fs||16)+'px');
-  document.documentElement.style.setProperty('--line-height', c.lh||2.0);
-  document.documentElement.style.setProperty('--font-family',
-    c.font==='gothic' ? '"Hiragino Sans","Noto Sans JP",sans-serif'
-                      : '"Hiragino Mincho ProN","游明朝",Georgia,serif');
-  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('active',b.dataset.theme===c.theme));
-  document.querySelectorAll('.lh-btn[data-lh]').forEach(b=>b.classList.toggle('active',parseFloat(b.dataset.lh)===c.lh));
-  document.querySelectorAll('.lh-btn[data-font]').forEach(b=>b.classList.toggle('active',b.dataset.font===(c.font||'serif')));
+  document.documentElement.setAttribute('data-theme', CFG.th);
+  document.documentElement.style.setProperty('--fs', CFG.fs + 'px');
+  document.documentElement.style.setProperty('--lh', CFG.lh);
+  document.documentElement.style.setProperty('--ff',
+    CFG.fn === 'gothic' ? '"Hiragino Sans","Noto Sans JP",sans-serif'
+                        : '"Hiragino Mincho ProN","游明朝",Georgia,serif');
+  document.querySelectorAll('.tb').forEach(b => b.classList.toggle('active', b.dataset.th === CFG.th));
+  document.querySelectorAll('.lhb[data-lh]').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.lh) === CFG.lh));
+  document.querySelectorAll('.lhb[data-fn]').forEach(b => b.classList.toggle('active', b.dataset.fn === (CFG.fn||'serif')));
 }
-function saveCfg(){ localStorage.setItem('nr_cfg',JSON.stringify(S.cfg)); applySettings(); }
 
-// =============================================
+// ============================================================
 // Page Nav
-// =============================================
-function goPage(id, savePrev=true){
-  if(savePrev) S.prevPage = S.page;
-  S.page = id;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id)?.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===id));
-  window.scrollTo(0,0);
+// ============================================================
+function goPage(id, sv=true) {
+  if(sv) prevPage = curPage;
+  curPage = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $(id)?.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n => n.classList.toggle('active', n.dataset.p === id));
+  scrollTo(0, 0);
 }
-document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>{
-  if(btn.dataset.page==='favorites') renderFavs();
-  goPage(btn.dataset.page);
+document.querySelectorAll('.ni').forEach(b => b.addEventListener('click', () => {
+  if(b.dataset.p === 'pf') renderFavs();
+  goPage(b.dataset.p);
 }));
 
-// =============================================
-// Search（なろうAPIに直接fetch）
-// =============================================
-async function doSearch(){
-  const kw  = document.getElementById('search-input').value.trim();
-  const genre = document.getElementById('filter-genre').value;
-  const order = document.getElementById('filter-order').value;
-  const end   = document.getElementById('filter-end').value;
-  const len   = document.getElementById('filter-length').value;
-  const el = document.getElementById('search-results');
-  el.innerHTML = '<div class="loading"><div class="spinner"></div><div>検索中…</div></div>';
+// ============================================================
+// Search — JSONP でなろうAPIを直接呼ぶ
+// ============================================================
+async function doSearch() {
+  const kw = $('si').value.trim();
+  const g  = $('fg').value;
+  const o  = $('fo').value;
+  const e  = $('fe').value;
+  const l  = $('fl').value;
+  $('sr').innerHTML = '<div class="ld"><div class="sp"></div><div>検索中…</div></div>';
 
-  const p = new URLSearchParams({ out:'json', lim:30, order, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' });
-  if(kw) p.set('word',kw);
-  if(genre){ p.set('biggenre', Math.floor(parseInt(genre)/100)); p.set('genre',genre); }
-  if(end==='1') p.set('end','1');
-  if(end==='0') p.set('end','0');
-  if(len==='short'){ p.set('minlen',0); p.set('maxlen',50000); }
-  if(len==='medium'){ p.set('minlen',50001); p.set('maxlen',200000); }
-  if(len==='long') p.set('minlen',200001);
+  const params = { out:'json', lim:30, order:o, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
+  if(kw) params.word = kw;
+  if(g) { params.biggenre = Math.floor(parseInt(g)/100); params.genre = g; }
+  if(e === '1') params.end = '1';
+  if(e === '0') params.end = '0';
+  if(l === 's') { params.minlen = 0; params.maxlen = 50000; }
+  if(l === 'm') { params.minlen = 50001; params.maxlen = 200000; }
+  if(l === 'l') params.minlen = 200001;
 
   try {
-    // なろうAPIはCORSヘッダーを返すのでプロキシ不要
-    const res = await fetch(NAROU_API+'?'+p.toString());
-    const data = await res.json();
-    if(!data||data.length<2){
-      el.innerHTML='<div class="empty"><div class="empty-icon">😢</div>作品が見つかりませんでした</div>';
+    const data = await jsonpFetch(API, params);
+    if(!Array.isArray(data) || data.length < 2) {
+      $('sr').innerHTML = '<div class="em">😢 作品が見つかりませんでした</div>';
       return;
     }
-    S.results = data.slice(1);
-    renderList(S.results, el);
-  } catch(e){
-    console.error(e);
-    el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div>読み込みに失敗しました<br><small>'+e.message+'</small></div>';
+    results = data.slice(1);
+    renderList(results, $('sr'));
+  } catch(err) {
+    $('sr').innerHTML = `<div class="em">⚠️ 読み込みに失敗しました<br><small style="font-size:.72rem;word-break:break-all">${esc(err.message)}</small></div>`;
   }
 }
-document.getElementById('search-btn').addEventListener('click', doSearch);
-document.getElementById('search-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
-document.querySelectorAll('.genre-tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('.genre-tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('filter-genre').value = t.dataset.genre;
-    doSearch();
-  });
-});
+$('sbtn').addEventListener('click', doSearch);
+$('si').addEventListener('keydown', e => { if(e.key === 'Enter') doSearch(); });
+document.querySelectorAll('.gt').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.gt').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('fg').value = t.dataset.g;
+  doSearch();
+}));
 
-// =============================================
-// Render novel list
-// =============================================
-function renderList(novels, container){
-  if(!novels?.length){
-    container.innerHTML='<div class="empty"><div class="empty-icon">😢</div>作品が見つかりませんでした</div>';
-    return;
-  }
-  container.innerHTML = '<div class="novel-list">'+novels.map(n=>{
-    const isFav = !!S.favs[n.ncode];
+// ============================================================
+// Render List
+// ============================================================
+function renderList(novels, container) {
+  if(!novels?.length) { container.innerHTML = '<div class="em">😢 作品が見つかりませんでした</div>'; return; }
+  container.innerHTML = '<div class="nlist">' + novels.map(n => {
+    const fav = !!FAVS[n.ncode];
     const kws = (n.keyword||'').split(' ').filter(k=>k).slice(0,5);
-    return `<div class="novel-card" data-ncode="${n.ncode}">
-      <div class="novel-card-header">
-        <div class="novel-title">${esc(n.title)}</div>
-        <button class="fav-btn" data-ncode="${n.ncode}" onclick="event.stopPropagation();toggleFav('${n.ncode}',this)">${isFav?'❤️':'🤍'}</button>
+    return `<div class="nc" data-nc="${n.ncode}">
+      <div class="nch">
+        <div class="nt">${esc(n.title)}</div>
+        <button class="fb" onclick="event.stopPropagation();tFav('${n.ncode}',this)">${fav?'❤️':'🤍'}</button>
       </div>
-      <div class="novel-author">✍️ ${esc(n.writer)}</div>
-      <div class="novel-summary">${esc(n.story||'')}</div>
-      <div class="novel-tags">${kws.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>
-      <div class="novel-meta">
-        <span>${n.end==1?'<span class="complete-badge">完結</span>':'<span class="wip-badge">連載中</span>'}</span>
+      <div class="na">✍️ ${esc(n.writer)}</div>
+      <div class="ns">${esc(n.story||'')}</div>
+      <div class="ntags">${kws.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>
+      <div class="nm">
+        <span>${n.end==1?'<span class="cb">完結</span>':'<span class="wb">連載中</span>'}</span>
         <span>⭐${fmt(n.global_point)}</span>
         <span>📖${fmt(n.general_all_no)}話</span>
         <span>📝${fmt(n.length)}字</span>
         <span>❤️${fmt(n.fav_novel_cnt)}</span>
       </div>
     </div>`;
-  }).join('')+'</div>';
-  container.querySelectorAll('.novel-card').forEach(c=>c.addEventListener('click',()=>openDetail(c.dataset.ncode)));
+  }).join('') + '</div>';
+  container.querySelectorAll('.nc').forEach(c => c.addEventListener('click', () => openDetail(c.dataset.nc)));
 }
 
-// =============================================
-// Favorites
-// =============================================
-function toggleFav(ncode, btn){
-  if(S.favs[ncode]){
-    delete S.favs[ncode];
-    if(btn) btn.textContent='🤍';
-  } else {
-    const n = S.results.find(x=>x.ncode===ncode) || S.novel || {ncode,title:ncode};
-    S.favs[ncode] = n;
-    if(btn) btn.textContent='❤️';
-  }
-  localStorage.setItem('nr_favs',JSON.stringify(S.favs));
+// ============================================================
+// Favs
+// ============================================================
+function tFav(nc, btn) {
+  if(FAVS[nc]) { delete FAVS[nc]; if(btn) btn.textContent = '🤍'; }
+  else { FAVS[nc] = results.find(x=>x.ncode===nc) || curNovel || {ncode:nc,title:nc}; if(btn) btn.textContent = '❤️'; }
+  saveFavs();
 }
-function renderFavs(){
-  const favs = Object.values(S.favs);
-  const el = document.getElementById('fav-list');
-  if(!favs.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">🔖</div>お気に入りはまだありません</div>';
-    return;
-  }
-  renderList(favs, el);
+function renderFavs() {
+  const f = Object.values(FAVS);
+  if(!f.length) { $('fl2').innerHTML = '<div class="em">🔖 お気に入りはまだありません</div>'; return; }
+  renderList(f, $('fl2'));
 }
 
-// =============================================
+// ============================================================
 // Detail
-// =============================================
-async function openDetail(ncode){
-  goPage('detail');
-  const body = document.getElementById('detail-body');
-  body.innerHTML='<div class="loading"><div class="spinner"></div></div>';
-
-  let n = S.results.find(x=>x.ncode===ncode) || S.favs[ncode];
-  if(!n||!n.story){
-    try{
-      const res = await fetch(NAROU_API+'?out=json&ncode='+ncode+'&of=n-t-w-s-k-gl-gf-nu-f-e-l-ga');
-      const data = await res.json();
-      if(data?.length>1) n=data[1];
-    }catch(e){}
+// ============================================================
+async function openDetail(nc) {
+  goPage('pd');
+  $('db').innerHTML = '<div class="ld"><div class="sp"></div></div>';
+  let n = results.find(x=>x.ncode===nc) || FAVS[nc];
+  if(!n || !n.story) {
+    try {
+      const data = await jsonpFetch(API, { out:'json', ncode:nc, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' });
+      if(data?.length > 1) n = data[1];
+    } catch(e) {}
   }
-  if(!n){ body.innerHTML='<div class="empty">読み込み失敗</div>'; return; }
-  S.novel = n;
-
-  const isFav = !!S.favs[ncode];
-  const bm = S.bmarks[ncode];
+  if(!n) { $('db').innerHTML = '<div class="em">読み込み失敗</div>'; return; }
+  curNovel = n;
+  const bm  = BMS[nc];
   const kws = (n.keyword||'').split(' ').filter(k=>k).slice(0,8);
-  const total = n.general_all_no||1;
-
-  document.getElementById('detail-header-title').textContent = n.title||'';
-  const favBtn = document.getElementById('detail-fav-btn');
-  favBtn.textContent = isFav?'❤️':'🤍';
-  favBtn.onclick = ()=>{ toggleFav(ncode,null); favBtn.textContent=S.favs[ncode]?'❤️':'🤍'; };
-
-  body.innerHTML = `
-    <div class="detail-title">${esc(n.title||'')}</div>
-    <div class="detail-author">✍️ ${esc(n.writer||'')}</div>
-    <div class="detail-badges">
-      ${n.end==1?'<span class="complete-badge">✅ 完結</span>':'<span class="wip-badge">📝 連載中</span>'}
-      <span class="tag">${esc(genreMap[String(n.genre)]||'')}</span>
+  const tot = n.general_all_no || 1;
+  $('dht').textContent = n.title || '';
+  const fb = $('dfb');
+  fb.textContent = FAVS[nc] ? '❤️' : '🤍';
+  fb.onclick = () => { tFav(nc, null); fb.textContent = FAVS[nc] ? '❤️' : '🤍'; };
+  $('db').innerHTML = `
+    <div class="dt">${esc(n.title||'')}</div>
+    <div class="dau">✍️ ${esc(n.writer||'')}</div>
+    <div class="dbadge">
+      ${n.end==1?'<span class="cb">✅ 完結</span>':'<span class="wb">📝 連載中</span>'}
+      <span class="tag">${esc(GM[String(n.genre)]||'')}</span>
     </div>
-    <div class="detail-summary">${esc(n.story||'')}</div>
-    <div class="detail-stats">
-      <div class="stat-box"><div class="stat-num">${fmt(n.global_point)}</div><div class="stat-label">総合ポイント</div></div>
-      <div class="stat-box"><div class="stat-num">${fmt(total)}</div><div class="stat-label">話数</div></div>
-      <div class="stat-box"><div class="stat-num">${fmt(n.fav_novel_cnt)}</div><div class="stat-label">お気に入り</div></div>
+    <div class="dsum">${esc(n.story||'')}</div>
+    <div class="dstats">
+      <div class="sb"><div class="sn">${fmt(n.global_point)}</div><div class="sl">総合ポイント</div></div>
+      <div class="sb"><div class="sn">${fmt(tot)}</div><div class="sl">話数</div></div>
+      <div class="sb"><div class="sn">${fmt(n.fav_novel_cnt)}</div><div class="sl">お気に入り</div></div>
     </div>
-    <div class="detail-tags">${kws.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>
-    <button class="read-btn" id="btn-read-continue">
-      ${bm?`📖 第${bm.ep}話から続きを読む`:'📖 第1話から読む'}
-    </button>
-    ${bm?'<button class="read-btn read-btn-sub" id="btn-read-from1">最初から読む</button>':''}
-    <div class="ep-list-title" id="ep-list-title">📋 話一覧（${total}話）</div>
-    <div class="ep-jump">
-      <input type="number" id="ep-jump-in" placeholder="話番号でジャンプ（例: 50）" min="1" max="${total}">
-      <button id="ep-jump-btn">Go</button>
+    <div class="dtags">${kws.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>
+    <button class="rbtn" id="brc">${bm ? `📖 第${bm.ep}話から続きを読む` : '📖 第1話から読む'}</button>
+    ${bm ? '<button class="rbtn rbtn2" id="br1">最初から読む</button>' : ''}
+    <div class="elt">📋 話一覧（${tot}話）</div>
+    <div class="ejump">
+      <input type="number" id="eji" placeholder="話番号でジャンプ（例: 50）" min="1" max="${tot}">
+      <button id="ejb">Go</button>
     </div>
-    <div id="ep-list-container"><div class="loading"><div class="spinner" style="width:24px;height:24px"></div></div></div>
+    <div id="elc"><div class="ld"><div class="sp" style="width:24px;height:24px"></div></div></div>
   `;
-
-  document.getElementById('btn-read-continue').onclick = ()=>openReader(ncode, bm?bm.ep:1);
-  document.getElementById('btn-read-from1')?.addEventListener('click',()=>openReader(ncode,1));
-  const jumpGo = ()=>{
-    const v=parseInt(document.getElementById('ep-jump-in').value);
-    if(v>=1&&v<=total) openReader(ncode,v);
-  };
-  document.getElementById('ep-jump-btn').onclick = jumpGo;
-  document.getElementById('ep-jump-in').addEventListener('keydown',e=>{ if(e.key==='Enter') jumpGo(); });
-
-  loadEpList(ncode, total);
+  $('brc').onclick = () => openReader(nc, bm ? bm.ep : 1);
+  $('br1')?.addEventListener('click', () => openReader(nc, 1));
+  const jmp = () => { const v = parseInt($('eji').value); if(v>=1 && v<=tot) openReader(nc, v); };
+  $('ejb').onclick = jmp;
+  $('eji').addEventListener('keydown', e => { if(e.key==='Enter') jmp(); });
+  loadEpList(nc, tot);
 }
-document.getElementById('detail-back').addEventListener('click',()=>goPage(S.prevPage||'search'));
+$('dbk').addEventListener('click', () => goPage(prevPage || 'ps'));
 
-// =============================================
-// Episode list（番号ベースで即表示 → バックグラウンドでタイトル取得）
-// =============================================
-async function loadEpList(ncode, total){
-  const container = document.getElementById('ep-list-container');
-  if(!container) return;
-
-  const eps = Array.from({length:total},(_,i)=>({num:i+1,title:`第${i+1}話`}));
-  S.epList = eps;
-
-  const bm = S.bmarks[ncode];
-  const render = ()=>{
-    const show = eps.slice(0,100);
-    container.innerHTML = show.map(e=>`
-      <div class="ep-item${bm&&bm.ep===e.num?' current':''}" data-ep="${e.num}">
-        <span><span class="ep-num">${e.num}話</span>${esc(e.title)}</span>
-        ${bm&&bm.ep===e.num?'<span style="font-size:.7rem">📖</span>':''}
-      </div>
-    `).join('');
-    if(eps.length>100) container.innerHTML+=`<div style="padding:10px;text-align:center;font-size:.78rem;color:var(--text3)">他${eps.length-100}話は上の番号入力でジャンプ</div>`;
-    container.querySelectorAll('.ep-item').forEach(item=>{
-      item.addEventListener('click',()=>openReader(ncode,parseInt(item.dataset.ep)));
-    });
+// ============================================================
+// Episode list
+// ============================================================
+async function loadEpList(nc, tot) {
+  const c = $('elc'); if(!c) return;
+  epList = Array.from({length: tot}, (_, i) => ({num: i+1, title: `第${i+1}話`}));
+  const bm = BMS[nc];
+  const render = () => {
+    c.innerHTML = '<div class="elist">' + epList.slice(0,100).map(e =>
+      `<div class="ei${bm&&bm.ep===e.num?' cur':''}" data-ep="${e.num}">
+        <span><span class="enum">${e.num}話</span>${esc(e.title)}</span>
+        ${bm&&bm.ep===e.num ? '<span style="font-size:.7rem">📖</span>' : ''}
+      </div>`
+    ).join('') + '</div>' +
+    (epList.length > 100 ? `<div style="padding:10px;text-align:center;font-size:.78rem;color:var(--text3)">他${epList.length-100}話は番号入力でジャンプ</div>` : '');
+    c.querySelectorAll('.ei').forEach(i => i.addEventListener('click', () => openReader(nc, parseInt(i.dataset.ep))));
   };
   render();
-
-  // corsproxy.io でなろう目次HTML取得（タイトル補完）
-  try{
-    const url = `https://ncode.syosetu.com/${ncode.toLowerCase()}/`;
-    const res = await fetch(PROXY+encodeURIComponent(url), {signal: AbortSignal.timeout(8000)});
-    if(!res.ok) throw new Error('status '+res.status);
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html,'text/html');
+  // バックグラウンドで話タイトルを取得
+  try {
+    const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/`;
+    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(8000)});
+    if(!res.ok) throw 0;
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
     const links = doc.querySelectorAll('.novel_sublist2 .subtitle a, .index_box .subtitle a');
-    if(links.length>0){
-      links.forEach(a=>{
-        const m=(a.getAttribute('href')||'').match(/\/(\d+)\/?$/);
-        if(m){ const e=eps.find(x=>x.num===parseInt(m[1])); if(e) e.title=a.textContent.trim(); }
+    if(links.length) {
+      links.forEach(a => {
+        const m = (a.getAttribute('href')||'').match(/\/(\d+)\/?$/);
+        if(m) { const ep = epList.find(x => x.num===parseInt(m[1])); if(ep) ep.title = a.textContent.trim(); }
       });
       render();
     }
-  }catch(e){/* 失敗しても番号ベース一覧で問題なし */}
+  } catch(e) {}
 }
 
-// =============================================
+// ============================================================
 // Reader
-// =============================================
-async function openReader(ncode, ep){
-  goPage('reader');
-  S.novel = S.novel||{ncode};
-  S.ep = ep;
-
-  document.getElementById('reader-title').textContent = S.novel.title||ncode;
-  document.getElementById('episode-body').innerHTML='<div class="loading"><div class="spinner"></div></div>';
-  document.getElementById('episode-title-bar').textContent='';
-
-  // しおり保存
-  const epInfo = S.epList.find(e=>e.num===ep);
-  const epTitle = epInfo?.title||`第${ep}話`;
-  S.bmarks[ncode]={ep,title:epTitle};
-  localStorage.setItem('nr_bmarks',JSON.stringify(S.bmarks));
-  document.getElementById('bookmark-bar').textContent=`📖 しおり：${epTitle}`;
-  updateNav(ep);
-
-  try{
-    const url = `https://ncode.syosetu.com/${ncode.toLowerCase()}/${ep}/`;
-    const res = await fetch(PROXY+encodeURIComponent(url), {signal: AbortSignal.timeout(10000)});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html,'text/html');
-
-    // タイトル
-    const sub = doc.querySelector('.novel_subtitle');
-    document.getElementById('episode-title-bar').textContent = sub?.textContent.trim()||epTitle;
-
-    // 本文
-    const honbun = doc.querySelector('#novel_honbun') || doc.querySelector('.novel_view');
-    if(honbun){
-      honbun.querySelectorAll('script,style').forEach(el=>el.remove());
-      document.getElementById('episode-body').innerHTML = honbun.innerHTML;
-    } else {
-      throw new Error('本文要素が見つかりません');
-    }
-  }catch(e){
-    const ncodeL = ncode.toLowerCase();
-    document.getElementById('episode-body').innerHTML=`
-      <div style="color:var(--text2);line-height:1.8;font-size:.9rem">
-        本文の読み込みに失敗しました。<br>
-        <a href="https://ncode.syosetu.com/${ncodeL}/${ep}/" target="_blank"
-           style="color:var(--accent);font-weight:600">📖 なろうで直接読む ↗</a>
-      </div>`;
+// ============================================================
+async function openReader(nc, ep) {
+  goPage('pr');
+  curNovel = curNovel || {ncode: nc};
+  curEp = ep;
+  $('rtit').textContent = curNovel.title || nc;
+  $('ebody').innerHTML = '<div class="ld"><div class="sp"></div></div>';
+  $('etbar').textContent = '';
+  const info  = epList.find(e => e.num === ep);
+  const title = info?.title || `第${ep}話`;
+  BMS[nc] = {ep, title}; saveBms();
+  $('bbar').textContent = `📖 しおり：${title}`;
+  updNav(ep);
+  try {
+    const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/`;
+    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(12000)});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const sub  = doc.querySelector('.novel_subtitle');
+    $('etbar').textContent = sub?.textContent.trim() || title;
+    const body = doc.querySelector('#novel_honbun') || doc.querySelector('.novel_view');
+    if(body) {
+      body.querySelectorAll('script,style').forEach(el => el.remove());
+      $('ebody').innerHTML = body.innerHTML;
+    } else throw new Error('本文なし');
+  } catch(err) {
+    $('ebody').innerHTML = `<div style="color:var(--text2);line-height:1.8">
+      本文を読み込めませんでした。<br>
+      <a href="https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/" target="_blank"
+         style="color:var(--accent);font-weight:600">📖 なろうで直接読む ↗</a>
+    </div>`;
   }
 }
-
-function updateNav(ep){
-  const total = S.epList.length||S.novel?.general_all_no||1;
-  S.totalEp = total;
-  document.getElementById('ep-indicator').textContent=`${ep} / ${total}`;
-  document.getElementById('btn-prev-ep').disabled = ep<=1;
-  document.getElementById('btn-next-ep').disabled = ep>=total;
+function updNav(ep) {
+  const tot = epList.length || curNovel?.general_all_no || 1;
+  totalEp = tot;
+  $('eind').textContent = `${ep} / ${tot}`;
+  $('bprev').disabled = ep <= 1;
+  $('bnext').disabled = ep >= tot;
 }
-document.getElementById('btn-prev-ep').addEventListener('click',()=>{ if(S.ep>1) openReader(S.novel.ncode,S.ep-1); });
-document.getElementById('btn-next-ep').addEventListener('click',()=>{ if(S.ep<S.totalEp) openReader(S.novel.ncode,S.ep+1); });
-document.getElementById('reader-back').addEventListener('click',()=>goPage('detail',false));
+$('bprev').addEventListener('click', () => { if(curEp > 1) openReader(curNovel.ncode, curEp-1); });
+$('bnext').addEventListener('click', () => { if(curEp < totalEp) openReader(curNovel.ncode, curEp+1); });
+$('rbk').addEventListener('click', () => goPage('pd', false));
 
-// =============================================
+// ============================================================
 // Settings UI
-// =============================================
-const drawer = document.getElementById('settings-drawer');
-document.getElementById('btn-settings').addEventListener('click',()=>drawer.classList.add('open'));
-document.getElementById('reader-settings-btn').addEventListener('click',()=>drawer.classList.add('open'));
-drawer.addEventListener('click',e=>{ if(e.target===drawer) drawer.classList.remove('open'); });
-document.querySelectorAll('.theme-btn').forEach(b=>b.addEventListener('click',()=>{ S.cfg.theme=b.dataset.theme; saveCfg(); }));
-document.getElementById('font-inc').addEventListener('click',()=>{ S.cfg.fs=Math.min(26,S.cfg.fs+1); saveCfg(); });
-document.getElementById('font-dec').addEventListener('click',()=>{ S.cfg.fs=Math.max(12,S.cfg.fs-1); saveCfg(); });
-document.querySelectorAll('.lh-btn[data-lh]').forEach(b=>b.addEventListener('click',()=>{ S.cfg.lh=parseFloat(b.dataset.lh); saveCfg(); }));
-document.querySelectorAll('.lh-btn[data-font]').forEach(b=>b.addEventListener('click',()=>{ S.cfg.font=b.dataset.font; saveCfg(); }));
+// ============================================================
+const dro = $('dro');
+$('btnS').addEventListener('click', () => dro.classList.add('open'));
+$('rset').addEventListener('click', () => dro.classList.add('open'));
+dro.addEventListener('click', e => { if(e.target === dro) dro.classList.remove('open'); });
+document.querySelectorAll('.tb').forEach(b => b.addEventListener('click', () => { CFG.th = b.dataset.th; saveCfg(); applySettings(); }));
+$('finc').addEventListener('click', () => { CFG.fs = Math.min(26, CFG.fs+1); saveCfg(); applySettings(); });
+$('fdec').addEventListener('click', () => { CFG.fs = Math.max(12, CFG.fs-1); saveCfg(); applySettings(); });
+document.querySelectorAll('.lhb[data-lh]').forEach(b => b.addEventListener('click', () => { CFG.lh = parseFloat(b.dataset.lh); saveCfg(); applySettings(); }));
+document.querySelectorAll('.lhb[data-fn]').forEach(b => b.addEventListener('click', () => { CFG.fn = b.dataset.fn; saveCfg(); applySettings(); }));
 
-// =============================================
+// ============================================================
 // Scroll top
-// =============================================
-const stBtn = document.getElementById('scroll-top');
-window.addEventListener('scroll',()=>stBtn.classList.toggle('visible',scrollY>300));
-stBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+// ============================================================
+const stb = $('stb');
+addEventListener('scroll', () => stb.classList.toggle('v', scrollY > 300));
+stb.addEventListener('click', () => scrollTo({top: 0, behavior: 'smooth'}));
 
-// =============================================
+// ============================================================
 // Init
-// =============================================
+// ============================================================
 applySettings();
-document.getElementById('filter-genre').value='201';
+$('fg').value = '201';
 doSearch();
 </script>
 </body>
