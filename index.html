@@ -42,7 +42,7 @@
   .na{font-size:.75rem;color:var(--text2);margin-bottom:8px}
   .ns{font-size:.8rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
   .ntags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-  .tag{padding:2px 8px;background:var(--tag-bg);color:var(--tag-text);border-radius:20px;font-size:.7rem;font-weight:600}
+  .tag{padding:2px 8px;background:var(--tag-bg);color:var(--tag-text);border-radius:20px;font-size:.7rem;font-weight:600}.stag{cursor:pointer;transition:opacity .15s}.stag:active{opacity:.6}
   .nm{display:flex;gap:10px;font-size:.72rem;color:var(--text3);flex-wrap:wrap}
   .cb{padding:1px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:.68rem;font-weight:700}
   [data-theme=dark] .cb{background:#1b3a1e;color:#66bb6a}
@@ -425,7 +425,7 @@ async function openDetail(nc) {
     <div class="dau">✍️ ${esc(n.writer||'')}</div>
     <div class="dbadge">
       ${n.end==1?'<span class="cb">✅ 完結</span>':'<span class="wb">📝 連載中</span>'}
-      <span class="tag">${esc(GM[String(n.genre)]||'')}</span>
+      <span class="tag stag" data-genre="${n.genre}">${esc(GM[String(n.genre)]||'')}</span>
     </div>
     <div class="dsum">${esc(n.story||'')}</div>
     <div class="dstats">
@@ -433,7 +433,7 @@ async function openDetail(nc) {
       <div class="sb"><div class="sn">${fmt(tot)}</div><div class="sl">話数</div></div>
       <div class="sb"><div class="sn">${fmt(n.fav_novel_cnt)}</div><div class="sl">お気に入り</div></div>
     </div>
-    <div class="dtags">${kws.map(k=>`<span class="tag">${esc(k)}</span>`).join('')}</div>
+    <div class="dtags">${kws.map(k=>`<span class="tag stag" data-kw="${esc(k)}">${esc(k)}</span>`).join('')}</div>
     <button class="rbtn" id="brc">${bm ? `📖 第${bm.ep}話から続きを読む` : '📖 第1話から読む'}</button>
     ${bm ? '<button class="rbtn rbtn2" id="br1">最初から読む</button>' : ''}
     <div class="elt">📋 話一覧（${tot}話）</div>
@@ -444,13 +444,38 @@ async function openDetail(nc) {
     <div id="elc"><div class="ld"><div class="sp" style="width:24px;height:24px"></div></div></div>
   `;
   $('brc').onclick = () => openReader(nc, bm ? bm.ep : 1);
+  // タグクリックで検索
+  document.querySelectorAll('.stag').forEach(t => {
+    t.addEventListener('click', () => {
+      if (t.dataset.kw) {
+        $('si').value = t.dataset.kw;
+        $('fg').value = '';
+        document.querySelectorAll('.gt').forEach(x => x.classList.remove('active'));
+        document.querySelector('.gt[data-g=""]').classList.add('active');
+        goPage('ps', false);
+        doSearch();
+      } else if (t.dataset.genre) {
+        $('si').value = '';
+        $('fg').value = t.dataset.genre;
+        document.querySelectorAll('.gt').forEach(x => x.classList.remove('active'));
+        const gt = document.querySelector(`.gt[data-g="${t.dataset.genre}"]`);
+        if (gt) gt.classList.add('active');
+        goPage('ps', false);
+        doSearch();
+      }
+    });
+  });
   $('br1')?.addEventListener('click', () => openReader(nc, 1));
   const jmp = () => { const v = parseInt($('eji').value); if(v>=1 && v<=tot) openReader(nc, v); };
   $('ejb').onclick = jmp;
   $('eji').addEventListener('keydown', e => { if(e.key==='Enter') jmp(); });
   loadEpList(nc, tot);
 }
-$('dbk').addEventListener('click', () => goPage(prevPage || 'ps'));
+$('dbk').addEventListener('click', () => {
+  // 検索かお気に入りページに戻る（詳細→詳細ループを防ぐ）
+  const dest = (prevPage === 'pd' || prevPage === 'pr') ? 'ps' : (prevPage || 'ps');
+  goPage(dest);
+});
 
 // ============================================================
 // Episode list
