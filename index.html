@@ -419,6 +419,7 @@ function renderList(novels, container) {
   container.innerHTML = '<div class="nlist">' + novels.map(n => {
     const fav = !!FAVS[n.ncode];
     const kws = (n.keyword||'').split(' ').filter(k=>k).slice(0,5);
+    const bm = BMS[n.ncode];
     return `<div class="nc" data-nc="${n.ncode}">
       <div class="nch">
         <div class="nt">${esc(n.title)}</div>
@@ -434,9 +435,19 @@ function renderList(novels, container) {
         <span>📝${fmt(n.length)}字</span>
         <span>❤️${fmt(n.fav_novel_cnt)}</span>
       </div>
+      ${bm ? `<button class="rbtn" style="margin-top:10px;margin-bottom:0;padding:9px;font-size:.82rem" onclick="event.stopPropagation();continueFromCard('${n.ncode}')">🔖 第${bm.ep}話「${esc(bm.title||'')}」から続きを読む</button>` : ''}
     </div>`;
   }).join('') + '</div>';
   container.querySelectorAll('.nc').forEach(c => c.addEventListener('click', () => openDetail(c.dataset.nc)));
+}
+
+// しおりから直接読書画面へ
+function continueFromCard(nc) {
+  const bm = BMS[nc];
+  if (!bm) return;
+  const n = results.find(x => x.ncode === nc) || FAVS[nc] || getHist().find(x => x.ncode === nc) || { ncode: nc };
+  curNovel = n;
+  openReader(nc, bm.ep);
 }
 
 // ============================================================
