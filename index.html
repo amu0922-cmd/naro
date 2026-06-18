@@ -175,7 +175,9 @@
       <span id="eind">- / -</span>
       <button class="eb" id="bnext">次 ▶</button>
     </div>
-    <iframe id="reader-iframe" src="" style="width:100%;border:none;flex:1;min-height:calc(100vh - 160px)"></iframe>
+    <div id="iframe-wrap" style="width:100%;flex:1;overflow:hidden;position:relative">
+      <iframe id="reader-iframe" src="" style="width:100%;border:none;height:100%;min-height:calc(100vh - 160px);transform-origin:top left;transition:transform .2s"></iframe>
+    </div>
   </div>
 </main>
 
@@ -277,6 +279,16 @@ const saveCfg  = () => localStorage.setItem('nr_cfg',  JSON.stringify(CFG));
 // ============================================================
 function applySettings() {
   document.documentElement.setAttribute('data-theme', CFG.th);
+  // iframeのスケール調整（基準16px → CFG.fsで拡縮）
+  const scale = CFG.fs / 16;
+  const iframe = $('reader-iframe');
+  if (iframe) {
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.width = `${100 / scale}%`;
+    iframe.style.height = `${100 / scale}%`;
+    const wrap = $('iframe-wrap');
+    if (wrap) wrap.style.minHeight = `calc((100vh - 160px) * ${scale})`;
+  }
   document.documentElement.style.setProperty('--fs', CFG.fs + 'px');
   document.documentElement.style.setProperty('--lh', CFG.lh);
   document.documentElement.style.setProperty('--ff',
