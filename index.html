@@ -101,6 +101,24 @@
   /* 本文スタイル */
   #ebody p{margin-bottom:1em}
   #ebody br+br{display:block;margin:.5em 0;content:""}
+  /* ランキング */
+  .rk-tab{padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s}
+  .rk-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .rk-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface)}
+  .rk-item:active{background:var(--accent-light)}
+  .rk-rank{font-size:1.1rem;font-weight:800;min-width:32px;text-align:center;padding-top:2px}
+  .rk-rank.top1{color:#f5a623}
+  .rk-rank.top2{color:#9b9b9b}
+  .rk-rank.top3{color:#c47d3e}
+  .rk-body{flex:1;min-width:0}
+  .rk-title{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.4}
+  .rk-author{font-size:.72rem;color:var(--text2);margin-bottom:5px}
+  .rk-meta{display:flex;gap:8px;font-size:.7rem;color:var(--text3);flex-wrap:wrap}
+  /* 進捗バー */
+  .prog-wrap{background:var(--bg2);border-radius:8px;padding:10px 14px;margin-bottom:14px}
+  .prog-label{font-size:.78rem;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between}
+  .prog-bar-bg{background:var(--border);border-radius:10px;height:8px;overflow:hidden}
+  .prog-bar{background:var(--accent);height:8px;border-radius:10px;transition:width .4s}
 </style>
 </head>
 <body>
@@ -153,6 +171,17 @@
     <div id="sr"><div class="em">📚 ジャンルを選んで探してみよう</div></div>
   </div>
 
+  <!-- ランキング -->
+  <div class="page" id="pk">
+    <div style="background:var(--bg2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px">
+      <button class="rk-tab active" data-rk="dailypoint">🌅 日間</button>
+      <button class="rk-tab" data-rk="weeklypoint">📅 週間</button>
+      <button class="rk-tab" data-rk="monthlypoint">📆 月間</button>
+      <button class="rk-tab" data-rk="hyoka">⭐ 総合</button>
+    </div>
+    <div id="rk-list"><div class="em">📊 読み込み中…</div></div>
+  </div>
+
   <!-- お気に入り -->
   <div class="page" id="pf">
     <div style="padding:16px 16px 8px;font-size:1rem;font-weight:800">❤️ お気に入り</div>
@@ -196,6 +225,7 @@
 
 <nav class="bnav">
   <button class="ni active" data-p="ps"><span class="icon">🔍</span><span>さがす</span></button>
+  <button class="ni" data-p="pk"><span class="icon">🏆</span><span>ランキング</span></button>
   <button class="ni" data-p="pf"><span class="icon">❤️</span><span>お気に入り</span></button>
 </nav>
 
@@ -313,6 +343,7 @@ function goPage(id, sv=true) {
 }
 document.querySelectorAll('.ni').forEach(b => b.addEventListener('click', () => {
   if(b.dataset.p === 'pf') renderFavs();
+  if(b.dataset.p === 'pk') loadRanking(curRankOrder);
   goPage(b.dataset.p);
 }));
 
@@ -657,6 +688,63 @@ const stb = $('stb');
 addEventListener('scroll', () => stb.classList.toggle('v', scrollY > 300));
 stb.addEventListener('click', () => scrollTo({top: 0, behavior: 'smooth'}));
 
+
+// ============================================================
+// Ranking
+// ============================================================
+let curRankOrder = 'dailypoint';
+
+async function loadRanking(order) {
+  curRankOrder = order;
+  const el = $('rk-list');
+  el.innerHTML = '<div class="ld"><div class="sp"></div><div>読み込み中…</div></div>';
+  const params = { out:'jsonp', lim:30, order, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
+  try {
+    const data = await jsonpFetch(API, params);
+    if(!Array.isArray(data) || data.length < 2) {
+      el.innerHTML = '<div class="em">😢 読み込み失敗</div>'; return;
+    }
+    const novels = data.slice(1);
+    el.innerHTML = novels.map((n, i) => {
+      const rank = i + 1;
+      const rankClass = rank === 1 ? 'top1' : rank === 2 ? 'top2' : rank === 3 ? 'top3' : '';
+      const rankLabel = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+      const kws = (n.keyword||'').split(' ').filter(k=>k).slice(0,3);
+      return `<div class="rk-item" data-nc="${n.ncode}">
+        <div class="rk-rank ${rankClass}">${rankLabel}</div>
+        <div class="rk-body">
+          <div class="rk-title">${esc(n.title)}</div>
+          <div class="rk-author">✍️ ${esc(n.writer)}</div>
+          <div class="rk-meta">
+            <span>${n.end==1?'<span class="cb">完結</span>':'<span class="wb">連載中</span>'}</span>
+            <span>⭐${fmt(n.global_point)}</span>
+            <span>📖${fmt(n.general_all_no)}話</span>
+            <span>❤️${fmt(n.fav_novel_cnt)}</span>
+          </div>
+          <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px">${kws.map(k=>`<span class="tag" style="font-size:.65rem">${esc(k)}</span>`).join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.rk-item').forEach(item => {
+      item.addEventListener('click', () => {
+        // 検索結果にも追加しておく
+        const n = novels.find(x => x.ncode === item.dataset.nc);
+        if(n && !results.find(x => x.ncode === n.ncode)) results.push(n);
+        openDetail(item.dataset.nc);
+      });
+    });
+  } catch(err) {
+    el.innerHTML = `<div class="em">⚠️ 読み込み失敗<br><small>${esc(err.message)}</small></div>`;
+  }
+}
+
+document.querySelectorAll('.rk-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.rk-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    loadRanking(t.dataset.rk);
+  });
+});
 
 // ============================================================
 // Toast
