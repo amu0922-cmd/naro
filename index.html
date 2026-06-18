@@ -263,8 +263,8 @@ let curPage='ps', prevPage='ps';
 let curNovel=null, curEp=1, totalEp=0, epList=[], results=[];
 
 const API  = 'https://api.syosetu.com/novelapi/api/';
-// 本文HTMLのみ corsproxy.io 経由（JSONPは使えないため）
-const HPRX = 'https://corsproxy.io/?url=';
+// 本文HTML取得用（allorigins.win は {contents: "html文字列"} を返す）
+const HPRX = 'https://api.allorigins.win/get?url=';
 
 const GM = {'101':'異世界〔恋愛〕','102':'現実世界〔恋愛〕','201':'ハイファンタジー','202':'ローファンタジー','301':'純文学','302':'ヒューマンドラマ','303':'歴史','304':'推理','305':'ホラー','306':'アクション','307':'コメディー','401':'VRゲーム〔SF〕','402':'宇宙〔SF〕','403':'空想科学〔SF〕','404':'パニック〔SF〕','9801':'ノンジャンル','9999':'その他'};
 
@@ -464,9 +464,10 @@ async function loadEpList(nc, tot) {
   // バックグラウンドで話タイトルを取得
   try {
     const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/`;
-    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(8000)});
+    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(10000)});
     if(!res.ok) throw 0;
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const json2 = await res.json();
+    const doc = new DOMParser().parseFromString(json2.contents, 'text/html');
     const links = doc.querySelectorAll('.novel_sublist2 .subtitle a, .index_box .subtitle a');
     if(links.length) {
       links.forEach(a => {
@@ -495,9 +496,10 @@ async function openReader(nc, ep) {
   updNav(ep);
   try {
     const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/`;
-    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(12000)});
+    const res = await fetch(HPRX + encodeURIComponent(url), {signal: AbortSignal.timeout(15000)});
     if(!res.ok) throw new Error('HTTP ' + res.status);
-    const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+    const json = await res.json();
+    const doc = new DOMParser().parseFromString(json.contents, 'text/html');
     const sub  = doc.querySelector('.novel_subtitle');
     $('etbar').textContent = sub?.textContent.trim() || title;
     const body = doc.querySelector('#novel_honbun') || doc.querySelector('.novel_view');
