@@ -106,8 +106,22 @@
 <body>
 <header class="header">
   <div class="logo">NaroReader <span>なろう</span></div>
-  <button class="ib ml" id="btnS">⚙️</button>
+  <button id="btnLogin" style="margin-left:auto;padding:5px 12px;background:var(--accent-light);color:var(--accent);border:1.5px solid var(--accent);border-radius:20px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">🔑 ログイン</button>
+  <button class="ib" id="btnS">⚙️</button>
 </header>
+
+<!-- ログインモーダル -->
+<div id="login-modal" style="display:none;position:fixed;inset:0;z-index:300;flex-direction:column;background:var(--bg)">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <button id="login-close" style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text2);padding:6px">✕ 閉じる</button>
+    <div style="flex:1;font-size:.85rem;font-weight:600;color:var(--text)">なろうにログイン</div>
+    <button id="login-done" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:20px;font-size:.8rem;font-weight:700;cursor:pointer">ログイン完了</button>
+  </div>
+  <div style="padding:10px 14px;background:var(--bg2);font-size:.78rem;color:var(--text2);border-bottom:1px solid var(--border)">
+    ログイン後「ログイン完了」を押してください。次回以降は不要です。
+  </div>
+  <iframe id="login-iframe" src="https://syosetu.com/login/input/" style="flex:1;width:100%;border:none"></iframe>
+</div>
 <main>
   <!-- 検索 -->
   <div class="page active" id="ps">
@@ -634,6 +648,37 @@ document.querySelectorAll('.lhb[data-fn]').forEach(b => b.addEventListener('clic
 const stb = $('stb');
 addEventListener('scroll', () => stb.classList.toggle('v', scrollY > 300));
 stb.addEventListener('click', () => scrollTo({top: 0, behavior: 'smooth'}));
+
+// ============================================================
+// Login modal
+// ============================================================
+$('btnLogin').addEventListener('click', () => {
+  const m = $('login-modal');
+  m.style.display = 'flex';
+});
+$('login-close').addEventListener('click', () => {
+  $('login-modal').style.display = 'none';
+});
+$('login-done').addEventListener('click', () => {
+  $('login-modal').style.display = 'none';
+  // ログイン済みフラグを保存
+  localStorage.setItem('nr_loggedin', '1');
+  $('btnLogin').textContent = '✅ ログイン済';
+  $('btnLogin').style.background = '#e8f5e9';
+  $('btnLogin').style.color = '#2e7d32';
+  $('btnLogin').style.borderColor = '#2e7d32';
+});
+// ログイン済みなら表示を変える
+if (localStorage.getItem('nr_loggedin')) {
+  document.addEventListener('DOMContentLoaded', () => {}, false);
+  const lb = $('btnLogin');
+  if (lb) {
+    lb.textContent = '✅ ログイン済';
+    lb.style.background = '#e8f5e9';
+    lb.style.color = '#2e7d32';
+    lb.style.borderColor = '#2e7d32';
+  }
+}
 
 // ============================================================
 // Init
