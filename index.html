@@ -317,7 +317,7 @@ async function doSearch() {
   const l  = $('fl').value;
   $('sr').innerHTML = '<div class="ld"><div class="sp"></div><div>検索中…</div></div>';
 
-  const params = { out:'json', lim:30, order:o, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
+  const params = { out:'jsonp', lim:30, order:o, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
   if(kw) params.word = kw;
   if(g) { params.biggenre = Math.floor(parseInt(g)/100); params.genre = g; }
   if(e === '1') params.end = '1';
@@ -398,7 +398,7 @@ async function openDetail(nc) {
   let n = results.find(x=>x.ncode===nc) || FAVS[nc];
   if(!n || !n.story) {
     try {
-      const data = await jsonpFetch(API, { out:'json', ncode:nc, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' });
+      const data = await jsonpFetch(API, { out:'jsonp', ncode:nc, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' });
       if(data?.length > 1) n = data[1];
     } catch(e) {}
   }
