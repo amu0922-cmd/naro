@@ -171,6 +171,15 @@
     <div id="sr"><div class="em">📚 ジャンルを選んで探してみよう</div></div>
   </div>
 
+  <!-- 履歴 -->
+  <div class="page" id="ph">
+    <div style="padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:1rem;font-weight:800">🕐 最近読んだ作品</div>
+      <button id="hist-clear" style="background:none;border:none;cursor:pointer;font-size:.75rem;color:var(--text3);padding:4px 8px">クリア</button>
+    </div>
+    <div id="hist-list"><div class="em">📖 まだ履歴がありません</div></div>
+  </div>
+
   <!-- ランキング -->
   <div class="page" id="pk">
     <div style="background:var(--bg2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px">
@@ -226,6 +235,7 @@
 <nav class="bnav">
   <button class="ni active" data-p="ps"><span class="icon">🔍</span><span>さがす</span></button>
   <button class="ni" data-p="pk"><span class="icon">🏆</span><span>ランキング</span></button>
+  <button class="ni" data-p="ph"><span class="icon">🕐</span><span>履歴</span></button>
   <button class="ni" data-p="pf"><span class="icon">❤️</span><span>お気に入り</span></button>
 </nav>
 
@@ -344,6 +354,7 @@ function goPage(id, sv=true) {
 document.querySelectorAll('.ni').forEach(b => b.addEventListener('click', () => {
   if(b.dataset.p === 'pf') renderFavs();
   if(b.dataset.p === 'pk') loadRanking(curRankOrder);
+  if(b.dataset.p === 'ph') renderHist();
   goPage(b.dataset.p);
 }));
 
@@ -457,6 +468,7 @@ async function openDetail(nc) {
   }
   if(!n) { $('db').innerHTML = '<div class="em">読み込み失敗</div>'; return; }
   curNovel = n;
+  addHist(n); // 履歴に追加
   const bm  = BMS[nc];
   const kws = (n.keyword||'').split(' ').filter(k=>k).slice(0,8);
   const tot = n.general_all_no || 1;
@@ -488,6 +500,17 @@ async function openDetail(nc) {
     <div id="elc"><div class="ld"><div class="sp" style="width:24px;height:24px"></div></div></div>
   `;
   $('brc').onclick = () => openReader(nc, bm ? bm.ep : 1);
+
+  // 進捗バーを動的に追加
+  if (bm && bm.ep > 0) {
+    const pct = Math.round(bm.ep / tot * 100);
+    const progHtml = `<div class="prog-wrap">
+      <div class="prog-label"><span>📖 読書進捗</span><span>${bm.ep} / ${tot}話（${pct}%）</span></div>
+      <div class="prog-bar-bg"><div class="prog-bar" style="width:${pct}%"></div></div>
+    </div>`;
+    const tagsEl = $('db').querySelector('.dtags');
+    if (tagsEl) tagsEl.insertAdjacentHTML('afterend', progHtml);
+  }
   // タグクリックで検索
   document.querySelectorAll('.stag').forEach(t => {
     t.addEventListener('click', () => {
@@ -688,6 +711,37 @@ const stb = $('stb');
 addEventListener('scroll', () => stb.classList.toggle('v', scrollY > 300));
 stb.addEventListener('click', () => scrollTo({top: 0, behavior: 'smooth'}));
 
+
+// ============================================================
+// History（閲覧履歴）
+// ============================================================
+const HIST_KEY = 'nr_hist';
+function getHist() { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); }
+function saveHist(h) { localStorage.setItem(HIST_KEY, JSON.stringify(h)); }
+
+function addHist(novel) {
+  if (!novel || !novel.ncode) return;
+  let h = getHist();
+  // 既存を削除してから先頭に追加
+  h = h.filter(x => x.ncode !== novel.ncode);
+  h.unshift({ ncode: novel.ncode, title: novel.title, writer: novel.writer, genre: novel.genre, end: novel.end, general_all_no: novel.general_all_no, fav_novel_cnt: novel.fav_novel_cnt, global_point: novel.global_point, story: novel.story, keyword: novel.keyword, viewedAt: Date.now() });
+  if (h.length > 50) h = h.slice(0, 50);
+  saveHist(h);
+}
+
+function renderHist() {
+  const h = getHist();
+  const el = $('hist-list');
+  if (!h.length) { el.innerHTML = '<div class="em">📖 まだ履歴がありません</div>'; return; }
+  renderList(h, el);
+}
+
+$('hist-clear').addEventListener('click', () => {
+  if (confirm('履歴をすべて削除しますか？')) {
+    saveHist([]);
+    renderHist();
+  }
+});
 
 // ============================================================
 // Ranking
