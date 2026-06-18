@@ -174,9 +174,10 @@
     <div class="rh">
       <button class="ib" id="rbk">← 戻る</button>
       <div class="rt" id="rtit"></div>
+      <button class="ib" id="btnBookmark" title="ここにしおりを挟む" style="font-size:1.1rem">🔖</button>
       <button class="ib" id="ropenext" title="なろうで開く">↗</button>
     </div>
-    <div class="bbar" id="bbar">📖 しおり</div>
+    <div class="bbar" id="bbar" style="cursor:pointer" title="しおりの話へジャンプ">📖 しおり</div>
     <div class="enav">
       <button class="eb" id="bprev">◀ 前</button>
       <span id="eind">- / -</span>
@@ -535,8 +536,8 @@ function openReader(nc, ep) {
   $('rtit').textContent = curNovel.title || nc;
   const info  = epList.find(e => e.num === ep);
   const title = info?.title || `第${ep}話`;
-  BMS[nc] = {ep, title}; saveBms();
-  $('bbar').textContent = `📖 しおり：${title}`;
+  // しおりはバーに現在話を表示するが自動保存はしない
+  $('bbar').textContent = `📖 第${curEp}話（🔖でしおりを挟む）`;
   updNav(ep);
   const url = `https://ncode.syosetu.com/${nc.toLowerCase()}/${ep}/`;
   $('reader-iframe').src = url;
@@ -554,6 +555,32 @@ function updNav(ep) {
 $('bprev').addEventListener('click', () => { if(curEp > 1) openReader(curNovel.ncode, curEp-1); });
 $('bnext').addEventListener('click', () => { if(curEp < totalEp) openReader(curNovel.ncode, curEp+1); });
 $('rbk').addEventListener('click', () => goPage('pd', false));
+
+// しおりボタン：今読んでいる話を手動で記録
+$('btnBookmark').addEventListener('click', () => {
+  if (!curNovel) return;
+  const nc = curNovel.ncode;
+  const info = epList.find(e => e.num === curEp);
+  const title = info?.title || `第${curEp}話`;
+  BMS[nc] = { ep: curEp, title }; saveBms();
+  // ボタンを一瞬光らせてフィードバック
+  const btn = $('btnBookmark');
+  btn.textContent = '✅';
+  btn.style.color = 'var(--accent)';
+  setTimeout(() => { btn.textContent = '🔖'; btn.style.color = ''; }, 1200);
+  $('bbar').textContent = `📖 しおり：${title}`;
+  // トースト表示
+  showToast(`🔖 第${curEp}話にしおりを挟みました`);
+});
+
+// しおりバーをタップでその話へジャンプ
+$('bbar').addEventListener('click', () => {
+  if (!curNovel) return;
+  const bm = BMS[curNovel.ncode];
+  if (bm && bm.ep !== curEp) {
+    openReader(curNovel.ncode, bm.ep);
+  }
+});
 
 // ============================================================
 // スワイプで前後の話に移動
@@ -630,6 +657,23 @@ const stb = $('stb');
 addEventListener('scroll', () => stb.classList.toggle('v', scrollY > 300));
 stb.addEventListener('click', () => scrollTo({top: 0, behavior: 'smooth'}));
 
+
+// ============================================================
+// Toast
+// ============================================================
+function showToast(msg) {
+  let t = $('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;font-size:.82rem;padding:8px 18px;border-radius:20px;z-index:500;pointer-events:none;transition:opacity .3s;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 2000);
+}
 
 // ============================================================
 // Init
