@@ -257,6 +257,8 @@
   </div>
 </div>
 <button class="stb" id="stb">▲</button>
+<!-- 読書中フローティング次へボタン -->
+<button id="float-next" style="display:none;position:fixed;bottom:80px;left:16px;z-index:90;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:1rem;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.25);align-items:center;justify-content:center;flex-direction:column;gap:2px;line-height:1">次へ<span style="font-size:.7rem">▶</span></button>
 
 <script>
 // ============================================================
@@ -350,6 +352,9 @@ function goPage(id, sv=true) {
   $(id)?.classList.add('active');
   document.querySelectorAll('.ni').forEach(n => n.classList.toggle('active', n.dataset.p === id));
   scrollTo(0, 0);
+  // 読書ページのみフローティングボタン表示
+  const fn = $('float-next');
+  if (fn) fn.style.display = id === 'pr' ? 'flex' : 'none';
 }
 document.querySelectorAll('.ni').forEach(b => b.addEventListener('click', () => {
   if(b.dataset.p === 'pf') renderFavs();
@@ -618,6 +623,7 @@ function updNav(ep) {
   $('bnext').disabled = ep >= tot;
 }
 $('bprev').addEventListener('click', () => { if(curEp > 1) openReader(curNovel.ncode, curEp-1); });
+$('float-next').addEventListener('click', () => { if(curEp < totalEp) openReader(curNovel.ncode, curEp+1); });
 $('bnext').addEventListener('click', () => { if(curEp < totalEp) openReader(curNovel.ncode, curEp+1); });
 $('rbk').addEventListener('click', () => goPage('pd', false));
 
