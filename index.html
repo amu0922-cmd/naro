@@ -713,8 +713,8 @@ $('bbar').addEventListener('click', () => {
 // Settings UI
 // ============================================================
 const dro = $('dro');
-$('btnS').addEventListener('click', () => dro.classList.add('open'));
-$('btnS2').addEventListener('click', () => dro.classList.add('open'));
+$('btnS').addEventListener('click', () => { dro.classList.add('open'); addSyncButtons(); });
+$('btnS2').addEventListener('click', () => { dro.classList.add('open'); addSyncButtons(); });
 dro.addEventListener('click', e => { if(e.target === dro) dro.classList.remove('open'); });
 document.querySelectorAll('.tb').forEach(b => b.addEventListener('click', () => { CFG.th = b.dataset.th; saveCfg(); applySettings(); }));
 $('finc').addEventListener('click', () => { CFG.fs = Math.min(26, CFG.fs+1); saveCfg(); applySettings(); });
@@ -832,6 +832,73 @@ function showToast(msg) {
   t.style.opacity = '1';
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.style.opacity = '0', 2000);
+}
+
+// ============================================================
+// Supabase クラウド同期
+// ============================================================
+const SB_URL = 'https://lttrqfbwhyktypddgtpn.supabase.co';
+const SB_KEY = 'sb_publishable_HDq_vxQzUnwqj_O606JfZg_2lV9T7Wy';
+
+async function sbFetch(method, body) {
+  return fetch(`${SB_URL}/rest/v1/naroreader?id=eq.main`, {
+    method,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'PATCH' ? 'return=minimal' : 'return=representation'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
+
+async function cloudSave() {
+  try {
+    const data = { favs: FAVS, bms: BMS, hist: getHist(), cfg: CFG };
+    await sbFetch('PATCH', { data, updated_at: new Date().toISOString() });
+    showToast('☁️ クラウドに保存しました');
+  } catch(e) { showToast('⚠️ 保存失敗: ' + e.message); }
+}
+
+async function cloudLoad() {
+  try {
+    const res = await sbFetch('GET');
+    const rows = await res.json();
+    if (!rows?.length || !rows[0].data) return false;
+    const d = rows[0].data;
+    if (d.favs) Object.assign(FAVS, d.favs);
+    if (d.bms)  Object.assign(BMS, d.bms);
+    if (d.hist) localStorage.setItem('nr_hist', JSON.stringify(d.hist));
+    if (d.cfg)  Object.assign(CFG, d.cfg);
+    saveFavs(); saveBms(); saveCfg();
+    return true;
+  } catch(e) { return false; }
+}
+
+// 設定ドロワーにクラウド同期ボタンを動的追加
+function addSyncButtons() {
+  const dro = $('dro');
+  if (!dro) return;
+  const wrap = dro.querySelector('.drw');
+  if (!wrap || wrap.querySelector('#sync-btns')) return;
+  const div = document.createElement('div');
+  div.id = 'sync-btns';
+  div.className = 'ss';
+  div.innerHTML = `<div class="sl2">☁️ クラウド同期</div>
+    <div style="display:flex;gap:8px">
+      <button id="btn-cloud-save" style="flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer">💾 保存</button>
+      <button id="btn-cloud-load" style="flex:1;padding:10px;background:var(--bg2);color:var(--text);border:1.5px solid var(--border);border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">📥 読み込み</button>
+    </div>
+    <div style="font-size:.7rem;color:var(--text3);margin-top:6px">お気に入り・しおり・履歴をクラウドに保存</div>`;
+  wrap.appendChild(div);
+  $('btn-cloud-save').addEventListener('click', cloudSave);
+  $('btn-cloud-load').addEventListener('click', async () => {
+    showToast('📥 読み込み中…');
+    const ok = await cloudLoad();
+    if (ok) { applySettings(); showToast('✅ 読み込み完了！'); }
+    else showToast('⚠️ データがありません');
+  });
 }
 
 // ============================================================
