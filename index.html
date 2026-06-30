@@ -156,6 +156,7 @@
         <select class="fs" id="fo"><option value="hyoka">評価順</option><option value="weekly">週間</option><option value="favnovelcnt">お気に入り</option><option value="new">新着</option><option value="lastupdatetime">更新順</option></select>
         <select class="fs" id="fe"><option value="">完結：すべて</option><option value="1">完結のみ</option><option value="0">連載中のみ</option></select>
         <select class="fs" id="fl"><option value="">文字数：すべて</option><option value="s">短編〜5万</option><option value="m">中編5〜20万</option><option value="l">長編20万〜</option></select>
+        <button id="r18-toggle" style="padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s">🔞 R18</button>
       </div>
     </div>
     <div class="gtabs">
@@ -182,11 +183,17 @@
 
   <!-- ランキング -->
   <div class="page" id="pk">
-    <div style="background:var(--bg2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px">
-      <button class="rk-tab active" data-rk="dailypoint">🌅 日間</button>
-      <button class="rk-tab" data-rk="weeklypoint">📅 週間</button>
-      <button class="rk-tab" data-rk="monthlypoint">📆 月間</button>
-      <button class="rk-tab" data-rk="hyoka">⭐ 総合</button>
+    <div style="background:var(--bg2);padding:8px 16px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button id="rk-mode-normal" class="rk-tab active" data-mode="normal">📚 通常</button>
+        <button id="rk-mode-r18" class="rk-tab" data-mode="r18">🔞 R18</button>
+      </div>
+      <div style="display:flex;gap:6px;padding-bottom:8px;overflow-x:auto;scrollbar-width:none">
+        <button class="rk-tab active" data-rk="dailypoint">🌅 日間</button>
+        <button class="rk-tab" data-rk="weeklypoint">📅 週間</button>
+        <button class="rk-tab" data-rk="monthlypoint">📆 月間</button>
+        <button class="rk-tab" data-rk="hyoka">⭐ 総合</button>
+      </div>
     </div>
     <div id="rk-list"><div class="em">📊 読み込み中…</div></div>
   </div>
@@ -304,7 +311,9 @@ const BMS  = JSON.parse(localStorage.getItem('nr_bms') || '{}');
 let curPage='ps', prevPage='ps';
 let curNovel=null, curEp=1, totalEp=0, epList=[], results=[];
 
-const API  = 'https://api.syosetu.com/novelapi/api/';
+const API     = 'https://api.syosetu.com/novelapi/api/';
+const API_R18 = 'https://api.syosetu.com/novel18api/api/';
+let isR18 = false; // 現在のモード
 // 本文HTML取得用（allorigins.win は {contents: "html文字列"} を返す）
 const HPRX = 'https://api.allorigins.win/get?url=';
 
@@ -397,7 +406,7 @@ async function doSearch() {
   if(l === 'l') params.minlen = 200001;
 
   try {
-    const data = await jsonpFetch(API, params);
+    const data = await jsonpFetch(isR18 ? API_R18 : API, params);
     if(!Array.isArray(data) || data.length < 2) {
       $('sr').innerHTML = '<div class="em">😢 作品が見つかりませんでした</div>';
       return;
@@ -778,6 +787,7 @@ $('hist-clear').addEventListener('click', () => {
 // Ranking
 // ============================================================
 let curRankOrder = 'dailypoint';
+let isRkR18 = false;
 
 async function loadRanking(order) {
   curRankOrder = order;
@@ -785,7 +795,7 @@ async function loadRanking(order) {
   el.innerHTML = '<div class="ld"><div class="sp"></div><div>読み込み中…</div></div>';
   const params = { out:'jsonp', lim:30, order, of:'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
   try {
-    const data = await jsonpFetch(API, params);
+    const data = await jsonpFetch(isRkR18 ? API_R18 : API, params);
     if(!Array.isArray(data) || data.length < 2) {
       el.innerHTML = '<div class="em">😢 読み込み失敗</div>'; return;
     }
@@ -823,12 +833,44 @@ async function loadRanking(order) {
   }
 }
 
-document.querySelectorAll('.rk-tab').forEach(t => {
+// ランキング期間タブ
+document.querySelectorAll('.rk-tab[data-rk]').forEach(t => {
   t.addEventListener('click', () => {
-    document.querySelectorAll('.rk-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.rk-tab[data-rk]').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     loadRanking(t.dataset.rk);
   });
+});
+
+// ランキングモード（通常/R18）
+document.querySelectorAll('.rk-tab[data-mode]').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.rk-tab[data-mode]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    isRkR18 = t.dataset.mode === 'r18';
+    loadRanking(curRankOrder);
+  });
+});
+
+// 検索R18トグル
+$('r18-toggle').addEventListener('click', () => {
+  isR18 = !isR18;
+  const btn = $('r18-toggle');
+  if (isR18) {
+    btn.style.background = '#c0392b';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#c0392b';
+    // ジャンルをR18用に切り替え
+    $('fg').innerHTML = `<option value=''>すべて</option><option value='101'>異世界〔恋愛〕</option><option value='102'>現実世界〔恋愛〕</option><option value='201'>ハイファンタジー</option><option value='202'>ローファンタジー</option><option value='301'>文芸</option><option value='401'>SF</option><option value='9801'>ノンジャンル</option><option value='9999'>その他</option>`;
+    showToast('🔞 R18モード ON');
+  } else {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    $('fg').innerHTML = `<option value=''>すべて</option><option value='101'>異世界〔恋愛〕</option><option value='102'>現実世界〔恋愛〕</option><option value='201'>ハイファンタジー</option><option value='202'>ローファンタジー</option><option value='301'>純文学</option><option value='302'>ヒューマンドラマ</option><option value='303'>歴史</option><option value='304'>推理</option><option value='305'>ホラー</option><option value='306'>アクション</option><option value='307'>コメディー</option><option value='401'>VRゲーム〔SF〕</option><option value='402'>宇宙〔SF〕</option><option value='403'>空想科学〔SF〕</option><option value='404'>パニック〔SF〕</option><option value='9801'>ノンジャンル</option><option value='9999'>その他</option>`;
+    showToast('📚 通常モードに戻りました');
+  }
+  doSearch();
 });
 
 // ============================================================
