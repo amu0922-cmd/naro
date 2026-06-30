@@ -536,6 +536,9 @@ async function openDetail(nc) {
       <button id="ejb">Go</button>
     </div>
     <div id="elc"><div class="ld"><div class="sp" style="width:24px;height:24px"></div></div></div>
+
+    <div id="similar-section" style="margin-top:24px"></div>
+    <div id="author-section" style="margin-top:24px"></div>
   `;
   $('brc').onclick = () => openReader(nc, bm ? bm.ep : 1);
 
@@ -575,6 +578,8 @@ async function openDetail(nc) {
   $('ejb').onclick = jmp;
   $('eji').addEventListener('keydown', e => { if(e.key==='Enter') jmp(); });
   loadEpList(nc, tot);
+  loadSimilar(nc, n);
+  loadAuthorWorks(nc, n);
 }
 $('dbk').addEventListener('click', () => {
   // 検索かお気に入りページに戻る（詳細→詳細ループを防ぐ）
@@ -888,6 +893,47 @@ function showToast(msg) {
   t.style.opacity = '1';
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.style.opacity = '0', 2000);
+}
+
+// ============================================================
+// 発見・おすすめ機能
+// ============================================================
+
+// 似ているタグの作品を表示
+async function loadSimilar(nc, novel) {
+  const el = $('similar-section');
+  if (!el) return;
+  const kws = (novel.keyword || '').split(' ').filter(k => k).slice(0, 3);
+  if (!kws.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="elt">🔎 似ている作品を探しています…</div>';
+  try {
+    const params = { out: 'jsonp', lim: 6, order: 'hyoka', word: kws.join(' '), of: 'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
+    const data = await jsonpFetch(isR18 ? API_R18 : API, params);
+    if (!Array.isArray(data) || data.length < 2) { el.innerHTML = ''; return; }
+    // 自分自身を除外
+    const list = data.slice(1).filter(x => x.ncode !== nc).slice(0, 5);
+    if (!list.length) { el.innerHTML = ''; return; }
+    list.forEach(x => { if (!results.find(r => r.ncode === x.ncode)) results.push(x); });
+    el.innerHTML = `<div class="elt">🔎 似ている作品（${kws.join('・')}）</div><div id="similar-list"></div>`;
+    renderList(list, $('similar-list'));
+  } catch(e) { el.innerHTML = ''; }
+}
+
+// 同じ作者の他の作品を表示
+async function loadAuthorWorks(nc, novel) {
+  const el = $('author-section');
+  if (!el || !novel.writer) return;
+  el.innerHTML = '<div class="elt">✍️ 同じ作者の作品を探しています…</div>';
+  try {
+    const params = { out: 'jsonp', lim: 6, order: 'hyoka', word: novel.writer, of: 'n-t-w-s-k-gl-gf-nu-f-e-l-ga' };
+    const data = await jsonpFetch(isR18 ? API_R18 : API, params);
+    if (!Array.isArray(data) || data.length < 2) { el.innerHTML = ''; return; }
+    const list = data.slice(1).filter(x => x.ncode !== nc && x.writer === novel.writer).slice(0, 5);
+    if (!list.length) { el.innerHTML = ''; return; }
+    list.forEach(x => { if (!results.find(r => r.ncode === x.ncode)) results.push(x); });
+    el.innerHTML = `<div class="elt">✍️ ${esc(novel.writer)} の他の作品</div><div id="author-list"></div>`;
+    renderList(list, $('author-list'));
+  } catch(e) { el.innerHTML = ''; }
 }
 
 // ============================================================
